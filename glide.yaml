@@ -1,0 +1,15 @@
+package: github.com/negz/kubehook
+import:
+- package: github.com/facebookgo/httpdown
+- package: github.com/julienschmidt/httprouter
+  version: v1.1
+- package: github.com/pkg/errors
+  version: v0.8.0
+- package: go.uber.org/zap
+  version: v1.0.0
+- package: gopkg.in/alecthomas/kingpin.v2
+  version: v2.2.3
+- package: k8s.io/client-go
+  version: v2.0.0
+  subpackages:
+  - pkg/apis/authentication/v1beta1
