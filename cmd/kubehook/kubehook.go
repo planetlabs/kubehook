@@ -6,11 +6,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/facebookgo/httpdown"
-	"github.com/julienschmidt/httprouter"
-	"github.com/negz/kubehook/auth"
+	"github.com/negz/kubehook/auth/noop"
 	"github.com/negz/kubehook/hook"
 
+	"github.com/facebookgo/httpdown"
+	"github.com/julienschmidt/httprouter"
 	"go.uber.org/zap"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
@@ -46,7 +46,7 @@ func main() {
 	}
 	kingpin.FatalIfError(err, "cannot create log")
 
-	a, err := auth.NewNoopAuthenticator(*groups, auth.Logger(log))
+	a, err := noop.NewAuthenticator(*groups, noop.Logger(log))
 	kingpin.FatalIfError(err, "cannot create noop authenticator")
 
 	r := httprouter.New()

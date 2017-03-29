@@ -1,11 +1,12 @@
-package auth
+package noop
 
 import (
 	"fmt"
 
-	"go.uber.org/zap"
+	"github.com/negz/kubehook/auth"
 
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
 )
 
 type noop struct {
@@ -24,9 +25,9 @@ func Logger(l *zap.Logger) Option {
 	}
 }
 
-// NewNoopAuthenticator returns an authenticator that authenticates any supplied
+// NewAuthenticator returns an authenticator that authenticates any supplied
 // token as the username passed to it as a token.
-func NewNoopAuthenticator(groups []string, ao ...Option) (Authenticator, error) {
+func NewAuthenticator(groups []string, ao ...Option) (auth.Authenticator, error) {
 	l, err := zap.NewProduction()
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot create default logger")
@@ -41,7 +42,7 @@ func NewNoopAuthenticator(groups []string, ao ...Option) (Authenticator, error) 
 	return a, nil
 }
 
-func (n *noop) Authenticate(token string) (*User, error) {
+func (n *noop) Authenticate(token string) (*auth.User, error) {
 	log := n.log.With(zap.String("token", token))
 	if token == "" {
 		log.Info("authentication", zap.Bool("success", false))
@@ -49,5 +50,5 @@ func (n *noop) Authenticate(token string) (*User, error) {
 	}
 
 	log.Info("authentication", zap.Bool("success", true))
-	return &User{Username: token, UID: fmt.Sprintf("noop/%s", token), Groups: n.groups}, nil
+	return &auth.User{Username: token, UID: fmt.Sprintf("noop/%s", token), Groups: n.groups}, nil
 }

@@ -8,7 +8,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/negz/kubehook/auth"
+	"github.com/negz/kubehook/auth/noop"
 
 	"k8s.io/client-go/pkg/apis/authentication/v1beta1"
 )
@@ -42,7 +42,7 @@ var webhookTests = []struct {
 
 func TestHandler(t *testing.T) {
 	for _, tt := range webhookTests {
-		a, err := auth.NewNoopAuthenticator(tt.rsp.Status.User.Groups)
+		a, err := noop.NewAuthenticator(tt.rsp.Status.User.Groups)
 		if err != nil {
 			t.Errorf("auth.NewNoopAuthenticator(%v): %v", tt.rsp.Status.User.Groups, err)
 			continue
