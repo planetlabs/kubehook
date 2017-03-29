@@ -9,8 +9,7 @@ import (
 	"github.com/negz/kubehook/auth"
 )
 
-// StatusFailed is returned for failed authentication requests.
-var StatusFailed v1beta1.TokenReviewStatus = v1beta1.TokenReviewStatus{Authenticated: false}
+var statusFailed v1beta1.TokenReviewStatus = v1beta1.TokenReviewStatus{Authenticated: false}
 
 // Handler returns an HTTP handler function that handles an authentication
 // webhook using the supplied Authenticator.
@@ -28,13 +27,13 @@ func Handler(a auth.Authenticator) http.HandlerFunc {
 
 		u, err := a.Authenticate(tr.Spec.Token)
 		if err != nil {
-			tr.Status = StatusFailed
+			tr.Status = statusFailed
 			j, jerr := json.Marshal(tr)
 			if jerr != nil {
 				http.Error(w, jerr.Error(), http.StatusInternalServerError)
 				return
 			}
-			w.WriteHeader(http.StatusUnauthorized)
+			w.WriteHeader(http.StatusForbidden)
 			w.Write(j)
 			return
 		}
