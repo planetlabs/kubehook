@@ -1,5 +1,5 @@
-hash: 17282133f8c47d886e29bc884eb76f02101a84824f8e7b8e2ce3db3d662f5f55
-updated: 2017-03-28T21:18:04.992419389-07:00
+hash: 1cebca78b42709c6114a214792ae18e053f7103090b9b98215045b6142166fc3
+updated: 2017-12-09T23:34:29.677477-08:00
 imports:
 - name: github.com/alecthomas/template
   version: a0175ee3bccc567396460bf5acd36800cb10c49c
@@ -7,55 +7,43 @@ imports:
   - parse
 - name: github.com/alecthomas/units
   version: 2efee857e7cfd4f3d0138cc3cbb1b4966962b93a
-- name: github.com/davecgh/go-spew
-  version: 5215b55f46b2b919f50a1df0eaa5886afe4e3b3d
-  subpackages:
-  - spew
-- name: github.com/docker/distribution
-  version: cd27f179f2c10c5d300e6d09025b538c475b0d51
-  subpackages:
-  - digest
-  - reference
+- name: github.com/dgrijalva/jwt-go
+  version: dbeaa9332f19a944acb5736b4456cfcc02140e29
 - name: github.com/emicklei/go-restful
-  version: 89ef8af493ab468a45a42bb0d89a06fccdd2fb22
+  version: ff4f55a206334ef123e4f79bbf348980da81ca46
   subpackages:
   - log
-  - swagger
 - name: github.com/facebookgo/clock
   version: 600d898af40aa09a7a93ecb9265d87b0504b6f03
 - name: github.com/facebookgo/httpdown
   version: a3b1354551a26449fbe05f5d855937f6e7acbd71
 - name: github.com/facebookgo/stats
   version: 1b76add642e42c6ffba7211ad7b3939ce654526e
-- name: github.com/ghodss/yaml
-  version: 73d445a93680fa1a78ae23a5839bad48f32ba1ee
 - name: github.com/go-openapi/jsonpointer
   version: 46af16f9f7b149af66e5d1bd010e3574dc06de98
 - name: github.com/go-openapi/jsonreference
   version: 13c6e3589ad90f49bd3e3bbe2c2cb3d7a4142272
 - name: github.com/go-openapi/spec
-  version: 6aced65f8501fe1217321abf0749d354824ba2ff
+  version: 7abd5745472fff5eb3685386d5fb8bf38683154d
 - name: github.com/go-openapi/swag
-  version: 1d0bd113de87027671077d3c71eb3ac5d7dbba72
+  version: f3f9494671f93fcff853e3c6e9e948b3eb71e590
 - name: github.com/gogo/protobuf
-  version: e18d7aa8f8c624c915db340349aad4c49b10d173
+  version: c0656edd0d9eab7c66d1eb0c568f9039345796f7
   subpackages:
   - proto
   - sortkeys
 - name: github.com/golang/glog
   version: 44145f04b68cf362d9c4df2182967c2275eaefed
 - name: github.com/google/gofuzz
-  version: bbcb9da2d746f8bdbd6a936686a0a6067ada0ec5
+  version: 44d81051d367757e1c7c6a5a86423ece9afcf63c
 - name: github.com/julienschmidt/httprouter
   version: 8c199fb6259ffc1af525cc3ad52ee60ba8359669
 - name: github.com/mailru/easyjson
-  version: d5b7844b561a7bc640052f1b935f7b800330d7e0
+  version: 2f5df55504ebc322e4d52d34df6a1f5b503bf26d
   subpackages:
   - buffer
   - jlexer
   - jwriter
-- name: github.com/pborman/uuid
-  version: ca53cad383cad2479bbba7f7a1a05797ec1386e4
 - name: github.com/pkg/errors
   version: 645ef00459ed84a119197bfb8d8205042c6df63d
 - name: github.com/PuerkitoBio/purell
@@ -63,35 +51,31 @@ imports:
 - name: github.com/PuerkitoBio/urlesc
   version: 5bd2802263f21d8788851d5305584c82a5c75d7e
 - name: github.com/spf13/pflag
-  version: 5ccb023bc27df288a957c5e994cd44fd19619465
-- name: github.com/ugorji/go
-  version: f1f1a805ed361a0e078bb537e4ea78cd37dcf065
-  subpackages:
-  - codec
+  version: 9ff6c6923cfffbcd502984b8e0c80539a94968b7
 - name: go.uber.org/atomic
-  version: 3b8db5e93c4c02efbc313e17b2e796b0914a01fb
+  version: 8474b86a5a6f79c443ce4b2992817ff32cf208b8
+- name: go.uber.org/multierr
+  version: 3c4937480c32f4c13a875a1829af76c98ca3d40a
 - name: go.uber.org/zap
-  version: 4257c7cf05477d92ec25c31cfd3d60e89575f18a
+  version: 35aad584952c3e7020db7b839f6b102de6271f89
   subpackages:
   - buffer
   - internal/bufferpool
   - internal/color
   - internal/exit
-  - internal/multierror
   - zapcore
 - name: golang.org/x/net
-  version: e90d6d0afc4c315a0d87a568ae68577cc15149a0
+  version: 1c05540f6879653db88113bc4a2b70aec4bd491f
   subpackages:
-  - context
-  - context/ctxhttp
   - http2
   - http2/hpack
   - idna
   - lex/httplex
 - name: golang.org/x/text
-  version: 2910a502d2bf9e43193af9d68ca516529614eed3
+  version: b19bf474d317b857955b12035d2c5acb57ce8b01
   subpackages:
   - cases
+  - internal
   - internal/tag
   - language
   - runes
@@ -102,57 +86,41 @@ imports:
   - unicode/norm
   - width
 - name: gopkg.in/alecthomas/kingpin.v2
-  version: e9044be3ab2a8e11d4e1f418d12f0790d57e8d70
+  version: 1087e65c9441605df944fb12c33f0fe7072d18ca
 - name: gopkg.in/inf.v0
   version: 3887ee99ecf07df5b447e9b00d9c0b2adaa9f3e4
 - name: gopkg.in/yaml.v2
   version: 53feefa2559fb8dfa8d81baad31be332c97d6c77
-- name: k8s.io/client-go
-  version: e121606b0d09b2e1c467183ee46217fa85a6b672
+- name: k8s.io/api
+  version: 5cb170de1f060ebf2dde62cc4b8241fdb3c01203
   subpackages:
-  - pkg/api
-  - pkg/api/meta
-  - pkg/api/meta/metatypes
+  - authentication/v1beta1
+- name: k8s.io/apimachinery
+  version: a04e753f5223cf882db01ac64212682ea28767b4
+  subpackages:
   - pkg/api/resource
-  - pkg/api/unversioned
-  - pkg/api/v1
-  - pkg/apis/authentication
-  - pkg/apis/authentication/v1beta1
-  - pkg/apis/autoscaling
-  - pkg/apis/batch
-  - pkg/apis/extensions
-  - pkg/auth/user
+  - pkg/apis/meta/v1
   - pkg/conversion
   - pkg/conversion/queryparams
   - pkg/fields
-  - pkg/genericapiserver/openapi/common
   - pkg/labels
   - pkg/runtime
-  - pkg/runtime/serializer
-  - pkg/runtime/serializer/json
-  - pkg/runtime/serializer/protobuf
-  - pkg/runtime/serializer/recognizer
-  - pkg/runtime/serializer/streaming
-  - pkg/runtime/serializer/versioning
+  - pkg/runtime/schema
   - pkg/selection
-  - pkg/third_party/forked/golang/reflect
   - pkg/types
-  - pkg/util
   - pkg/util/errors
-  - pkg/util/framer
   - pkg/util/intstr
   - pkg/util/json
-  - pkg/util/labels
   - pkg/util/net
-  - pkg/util/parsers
-  - pkg/util/rand
   - pkg/util/runtime
   - pkg/util/sets
-  - pkg/util/uuid
   - pkg/util/validation
   - pkg/util/validation/field
   - pkg/util/wait
-  - pkg/util/yaml
   - pkg/watch
-  - pkg/watch/versioned
+  - third_party/forked/golang/reflect
+- name: k8s.io/kube-openapi
+  version: 39a7bf85c140f972372c2a0d1ee40adbf0c8bfe1
+  subpackages:
+  - pkg/common
 testImports: []
