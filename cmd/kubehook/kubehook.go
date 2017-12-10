@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/negz/kubehook/auth/jwt"
+	"github.com/negz/kubehook/generate"
 	"github.com/negz/kubehook/hook"
 
 	"github.com/facebookgo/httpdown"
@@ -42,6 +43,7 @@ func main() {
 		stop     = app.Flag("close-after", "Wait this long at shutdown before closing HTTP connections.").Default("1m").Duration()
 		kill     = app.Flag("kill-after", "Wait this long at shutdown before exiting.").Default("2m").Duration()
 		audience = app.Flag("audience", "Audience for JWT HMAC creation and verification.").Default(jwt.DefaultAudience).String()
+		header   = app.Flag("user-header", "HTTP header specifying the authenticated user sending a token generation request.").Default(generate.DefaultUserHeader).String()
 
 		secret = app.Arg("secret", "Secret for JWT HMAC signature and verification.").Required().Envar(envVarName(app.Name, "secret")).String()
 	)
@@ -59,6 +61,7 @@ func main() {
 	kingpin.FatalIfError(err, "cannot create JWT authenticator")
 
 	r := httprouter.New()
+	r.HandlerFunc("POST", "/generate", logReq(generate.Handler(m, *header), log))
 	r.HandlerFunc("GET", "/authenticate", logReq(hook.Handler(m), log))
 	r.HandlerFunc("GET", "/quitquitquit", logReq(func(_ http.ResponseWriter, _ *http.Request) { os.Exit(0) }, log))
 

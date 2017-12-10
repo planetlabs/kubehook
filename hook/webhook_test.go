@@ -16,13 +16,13 @@ import (
 func TestHandler(t *testing.T) {
 	cases := []struct {
 		name string
-		req  v1beta1.TokenReview
-		rsp  v1beta1.TokenReview
+		req  *v1beta1.TokenReview
+		rsp  *v1beta1.TokenReview
 	}{
 		{
 			name: "Success",
-			req:  v1beta1.TokenReview{Spec: v1beta1.TokenReviewSpec{Token: "token"}},
-			rsp: v1beta1.TokenReview{
+			req:  &v1beta1.TokenReview{Spec: v1beta1.TokenReviewSpec{Token: "token"}},
+			rsp: &v1beta1.TokenReview{
 				Spec: v1beta1.TokenReviewSpec{Token: "token"},
 				Status: v1beta1.TokenReviewStatus{
 					Authenticated: true,
@@ -36,8 +36,8 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			name: "Failure",
-			req:  v1beta1.TokenReview{Spec: v1beta1.TokenReviewSpec{Token: ""}},
-			rsp: v1beta1.TokenReview{
+			req:  &v1beta1.TokenReview{Spec: v1beta1.TokenReviewSpec{Token: ""}},
+			rsp: &v1beta1.TokenReview{
 				Spec:   v1beta1.TokenReviewSpec{Token: ""},
 				Status: v1beta1.TokenReviewStatus{Authenticated: false},
 			},
@@ -70,8 +70,8 @@ func TestHandler(t *testing.T) {
 				t.Errorf("json.Unmarshal(%v, %s): %v", w.Body, rsp, err)
 			}
 
-			if !reflect.DeepEqual(tt.rsp, *rsp) {
-				t.Errorf("want:\n %+#v\n\n got:\n %+#v", tt.rsp, rsp)
+			if !reflect.DeepEqual(tt.rsp, rsp) {
+				t.Errorf("\nwant: %+#v\n got: %+#v", tt.rsp, rsp)
 			}
 		})
 	}
