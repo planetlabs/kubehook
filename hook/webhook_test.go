@@ -57,7 +57,7 @@ func TestHandler(t *testing.T) {
 		Handler(a)(w, httptest.NewRequest("GET", "/", bytes.NewReader(body)))
 		expectedStatus := http.StatusOK
 		if !tt.rsp.Status.Authenticated {
-			expectedStatus = http.StatusUnauthorized
+			expectedStatus = http.StatusForbidden
 		}
 
 		if w.Code != expectedStatus {
