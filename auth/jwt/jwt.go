@@ -1,6 +1,9 @@
 package jwt
 
 import (
+	"fmt"
+	"time"
+
 	"github.com/negz/kubehook/auth"
 
 	jwt "github.com/dgrijalva/jwt-go"
@@ -8,21 +11,25 @@ import (
 	"go.uber.org/zap"
 )
 
-// DefaultAudience for JWT token verification.
-const DefaultAudience = "github.com/negz/kubehook"
+// Defaults for JSON Web Tokens.
+const (
+	DefaultAudience    = "github.com/negz/kubehook"
+	DefaultMaxLifetime = 30 * 24 * time.Hour
+)
 
-type jwta struct {
-	log      *zap.Logger
-	secret   []byte
-	audience string
+type jwtm struct {
+	log         *zap.Logger
+	secret      []byte
+	audience    string
+	maxLifetime time.Duration
 }
 
-// A Option represents an argument to NewBackend
-type Option func(*jwta) error
+// An Option represents an optional argument to NewBackend
+type Option func(*jwtm) error
 
 // Logger allows the use of a custom Zap logger.
 func Logger(l *zap.Logger) Option {
-	return func(f *jwta) error {
+	return func(f *jwtm) error {
 		f.log = l
 		return nil
 	}
@@ -30,31 +37,42 @@ func Logger(l *zap.Logger) Option {
 
 // Audience required to be set in valid JWTs.
 func Audience(a string) Option {
-	return func(f *jwta) error {
+	return func(f *jwtm) error {
 		f.audience = a
 		return nil
 	}
 }
 
-// NewAuthenticator returns an authenticator that authenticates JWTs.
-func NewAuthenticator(secret []byte, ao ...Option) (auth.Authenticator, error) {
+// MaxLifetime is the maximum allowed expiry time for generated tokens.
+func MaxLifetime(d time.Duration) Option {
+	return func(f *jwtm) error {
+		f.maxLifetime = d
+		return nil
+	}
+}
+
+// NewManager generates and authenticates JSON Web Tokens (JWTs).
+func NewManager(secret []byte, mo ...Option) (auth.Manager, error) {
 	l, err := zap.NewProduction()
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot create default logger")
 	}
-	a := &jwta{log: l, secret: secret, audience: DefaultAudience}
-	for _, o := range ao {
-		if err := o(a); err != nil {
-			return nil, errors.Wrap(err, "cannot apply JWT authenticator option")
+	m := &jwtm{log: l, secret: secret, audience: DefaultAudience, maxLifetime: DefaultMaxLifetime}
+	for _, o := range mo {
+		if err := o(m); err != nil {
+			return nil, errors.Wrap(err, "cannot apply JWT manager option")
 		}
 	}
-	return a, nil
+	return m, nil
 }
 
 type claims struct {
-	UID    string   `json:"uid,omitempty"`
 	Groups []string `json:"grp,omitempty"`
 	jwt.StandardClaims
+}
+
+func (c *claims) UID() string {
+	return fmt.Sprintf("%s/%s", c.Audience, c.Subject)
 }
 
 func isHMACSigned(t *jwt.Token) bool {
@@ -62,14 +80,14 @@ func isHMACSigned(t *jwt.Token) bool {
 	return ok
 }
 
-func (a *jwta) Authenticate(token string) (*auth.User, error) {
-	log := a.log.With(zap.String("jwt", token))
+func (m *jwtm) Authenticate(token string) (*auth.User, error) {
+	log := m.log.With(zap.String("jwt", token))
 
 	t, err := jwt.ParseWithClaims(token, &claims{}, func(t *jwt.Token) (interface{}, error) {
 		if !isHMACSigned(t) {
 			return nil, errors.Errorf("token must be HMAC signed JWT")
 		}
-		return a.secret, nil
+		return m.secret, nil
 	})
 	if err != nil {
 		log.Info("auth", zap.Bool("success", false))
@@ -81,11 +99,33 @@ func (a *jwta) Authenticate(token string) (*auth.User, error) {
 		log.Info("auth", zap.Bool("success", false))
 		return nil, errors.New("cannot parse JWT claims")
 	}
-	if c.Audience != a.audience {
+	if c.Audience != m.audience {
 		log.Info("auth", zap.Bool("success", false))
-		return nil, errors.Errorf("invalid JWT audience %s - audience %s is required", c.Audience, a.audience)
+		return nil, errors.Errorf("invalid JWT audience %s - audience %s is required", c.Audience, m.audience)
 	}
 
 	log.Info("auth", zap.Bool("success", true))
-	return &auth.User{Username: c.Subject, UID: c.UID, Groups: c.Groups}, nil
+	return &auth.User{Username: c.Subject, UID: c.UID(), Groups: c.Groups}, nil
+}
+
+func (m *jwtm) Generate(u *auth.User, lifetime time.Duration) (string, error) {
+	if lifetime > m.maxLifetime {
+		return "", errors.Errorf("requested JWT lifetime %s is greater than maximum allowed lifetime %s", lifetime, m.maxLifetime)
+	}
+
+	c := &claims{
+		StandardClaims: jwt.StandardClaims{
+			Audience:  m.audience,
+			Subject:   u.Username,
+			NotBefore: time.Now().UTC().Unix(),
+			ExpiresAt: time.Now().UTC().Add(lifetime).Unix(),
+		},
+		Groups: u.Groups,
+	}
+
+	ss, err := jwt.NewWithClaims(jwt.SigningMethodHS256, c).SignedString(m.secret)
+	if err != nil {
+		return "", errors.Wrap(err, "cannot generate JWT")
+	}
+	return ss, nil
 }

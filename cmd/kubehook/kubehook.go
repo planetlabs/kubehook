@@ -55,11 +55,11 @@ func main() {
 	}
 	kingpin.FatalIfError(err, "cannot create log")
 
-	a, err := jwt.NewAuthenticator([]byte(*secret), jwt.Audience(*audience), jwt.Logger(log))
+	m, err := jwt.NewManager([]byte(*secret), jwt.Audience(*audience), jwt.Logger(log))
 	kingpin.FatalIfError(err, "cannot create JWT authenticator")
 
 	r := httprouter.New()
-	r.HandlerFunc("GET", "/authenticate", logReq(hook.Handler(a), log))
+	r.HandlerFunc("GET", "/authenticate", logReq(hook.Handler(m), log))
 	r.HandlerFunc("GET", "/quitquitquit", logReq(func(_ http.ResponseWriter, _ *http.Request) { os.Exit(0) }, log))
 
 	hd := &httpdown.HTTP{StopTimeout: *stop, KillTimeout: *kill}

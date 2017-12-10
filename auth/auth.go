@@ -1,5 +1,9 @@
 package auth
 
+import (
+	"time"
+)
+
 // A User represents an authenticated user.
 type User struct {
 	Username string   // Username is the user's maybe-not-unique username.
@@ -9,7 +13,7 @@ type User struct {
 
 // A Generator generates a token for the given user.
 type Generator interface {
-	Generate(u *User) (token string, err error)
+	Generate(u *User, lifetime time.Duration) (token string, err error)
 }
 
 // An Authenticator authenticates a user based on a token.

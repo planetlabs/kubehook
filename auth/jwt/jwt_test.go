@@ -1,7 +1,6 @@
 package jwt
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 	"time"
@@ -23,7 +22,6 @@ func tokenWithMethod(m jwt.SigningMethod, secret []byte, audience, username stri
 			NotBefore: nbf,
 			ExpiresAt: exp,
 		},
-		UID: fmt.Sprintf("kubehook/%s", username),
 	}
 
 	t := jwt.NewWithClaims(m, c)
@@ -48,7 +46,7 @@ func TestAuthenticate(t *testing.T) {
 			name:    "ValidToken",
 			secret:  secret,
 			token:   token(secret, DefaultAudience, "negz", tenMinsAgo, tenMinsFromNow),
-			want:    &auth.User{Username: "negz", UID: "kubehook/negz"},
+			want:    &auth.User{Username: "negz", UID: "github.com/negz/kubehook/negz"},
 			wantErr: false,
 		},
 		{
@@ -85,16 +83,64 @@ func TestAuthenticate(t *testing.T) {
 	}
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
-			a, _ := NewAuthenticator(tt.secret, tt.opts...)
-			got, err := a.Authenticate(tt.token)
+			m, _ := NewManager(tt.secret, tt.opts...)
+			got, err := m.Authenticate(tt.token)
 			if err != nil {
 				if tt.wantErr {
 					return
 				}
-				t.Fatalf("a.Authenticate(...): %v", err)
+				t.Fatalf("m.Authenticate(...): %v", err)
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("a.Authenticate(...) got %v, want %v", got, tt.want)
+				t.Errorf("m.Authenticate(...): got %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestGenerate(t *testing.T) {
+	cases := []struct {
+		name     string
+		secret   []byte
+		lifetime time.Duration
+		opts     []Option
+		user     *auth.User
+		wantErr  bool
+	}{
+		{
+			name:     "ValidToken",
+			secret:   secret,
+			user:     &auth.User{Username: "negz", UID: "github.com/negz/kubehook/negz"},
+			lifetime: DefaultMaxLifetime,
+			wantErr:  false,
+		},
+		{
+			name:     "LifetimeTooLong",
+			secret:   secret,
+			opts:     []Option{MaxLifetime(DefaultMaxLifetime - 1*time.Hour)},
+			user:     &auth.User{Username: "negz", UID: "github.com/negz/kubehook/negz"},
+			lifetime: DefaultMaxLifetime,
+			wantErr:  true,
+		},
+	}
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			m, _ := NewManager(tt.secret, tt.opts...)
+			token, err := m.Generate(tt.user, tt.lifetime)
+			if err != nil {
+				if tt.wantErr {
+					return
+				}
+				t.Fatalf("m.Generate(...): %v", err)
+			}
+
+			got, err := m.Authenticate(token)
+			if err != nil {
+				t.Fatalf("m.Authenticate(...): %v", err)
+			}
+
+			if !reflect.DeepEqual(got, tt.user) {
+				t.Errorf("m.Generate(...): got %v, want %v", got, tt.user)
 			}
 		})
 	}

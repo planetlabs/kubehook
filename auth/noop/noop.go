@@ -2,6 +2,7 @@ package noop
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/negz/kubehook/auth"
 
@@ -52,7 +53,7 @@ func (n *noop) Authenticate(token string) (*auth.User, error) {
 	return &auth.User{Username: token, UID: fmt.Sprintf("noop/%s", token), Groups: n.groups}, nil
 }
 
-func (n *noop) Generate(u *auth.User) (string, error) {
+func (n *noop) Generate(u *auth.User, _ time.Duration) (string, error) {
 	n.log.Info("generate", zap.String("uid", u.UID), zap.String("token", u.Username))
 	return u.Username, nil
 }
