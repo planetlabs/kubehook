@@ -45,7 +45,7 @@ func TestHandler(t *testing.T) {
 	}
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
-			a, err := noop.NewAuthenticator(tt.rsp.Status.User.Groups)
+			m, err := noop.NewManager(tt.rsp.Status.User.Groups)
 			if err != nil {
 				t.Fatalf("auth.NewNoopAuthenticator(%v): %v", tt.rsp.Status.User.Groups, err)
 			}
@@ -55,7 +55,7 @@ func TestHandler(t *testing.T) {
 			if err != nil {
 				t.Fatalf("json.Marshal(%+#v): %v", tt.req, err)
 			}
-			Handler(a)(w, httptest.NewRequest("GET", "/", bytes.NewReader(body)))
+			Handler(m)(w, httptest.NewRequest("GET", "/", bytes.NewReader(body)))
 			expectedStatus := http.StatusOK
 			if !tt.rsp.Status.Authenticated {
 				expectedStatus = http.StatusForbidden

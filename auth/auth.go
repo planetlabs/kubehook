@@ -7,7 +7,18 @@ type User struct {
 	Groups   []string // Groups are the groups the user belongs to.
 }
 
+// A Generator generates a token for the given user.
+type Generator interface {
+	Generate(u *User) (token string, err error)
+}
+
 // An Authenticator authenticates a user based on a token.
 type Authenticator interface {
 	Authenticate(token string) (*User, error)
+}
+
+// A Manager both generates and authenticates user tokens.
+type Manager interface {
+	Generator
+	Authenticator
 }
