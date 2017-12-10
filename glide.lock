@@ -1,5 +1,5 @@
-hash: 31e8add9d659c4142557156022a0aefc2a7b9916695efc342394f49264678d9b
-updated: 2017-12-09T16:47:42.868827-08:00
+hash: 1cebca78b42709c6114a214792ae18e053f7103090b9b98215045b6142166fc3
+updated: 2017-12-09T23:34:29.677477-08:00
 imports:
 - name: github.com/alecthomas/template
   version: a0175ee3bccc567396460bf5acd36800cb10c49c
@@ -7,6 +7,8 @@ imports:
   - parse
 - name: github.com/alecthomas/units
   version: 2efee857e7cfd4f3d0138cc3cbb1b4966962b93a
+- name: github.com/dgrijalva/jwt-go
+  version: dbeaa9332f19a944acb5736b4456cfcc02140e29
 - name: github.com/emicklei/go-restful
   version: ff4f55a206334ef123e4f79bbf348980da81ca46
   subpackages:

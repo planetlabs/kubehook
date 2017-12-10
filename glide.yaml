@@ -12,3 +12,5 @@ import:
 - package: k8s.io/api
   subpackages:
   - authentication/v1beta1
+- package: github.com/dgrijalva/jwt-go
+  version: v3.1.0

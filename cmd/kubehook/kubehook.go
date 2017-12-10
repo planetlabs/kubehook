@@ -1,11 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
-	"github.com/negz/kubehook/auth/noop"
+	"github.com/negz/kubehook/auth/jwt"
 	"github.com/negz/kubehook/hook"
 
 	"github.com/facebookgo/httpdown"
@@ -17,20 +19,31 @@ import (
 func logReq(fn http.HandlerFunc, log *zap.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Info("request",
+			zap.String("host", r.Host),
 			zap.String("method", r.Method),
 			zap.String("url", r.URL.String()),
+			zap.String("agent", r.UserAgent()),
 			zap.String("addr", r.RemoteAddr))
 		fn(w, r)
 	}
 }
 
+// envVarName returns DefaultEnvars style env var names. It can be used for
+// args, which DefaultEnvars does not seem to setup.
+func envVarName(app, arg string) string {
+	return strings.Replace(strings.ToUpper(fmt.Sprintf("%s_%s", app, arg)), "-", "_", -1)
+}
+
 func main() {
 	var (
-		app    = kingpin.New(filepath.Base(os.Args[0]), "Authenticates Kubernetes users.").DefaultEnvars()
-		listen = app.Flag("listen", "Address at which to expose HTTP webhook.").Default(":10003").String()
-		debug  = app.Flag("debug", "Run with debug logging.").Short('d').Bool()
-		stop   = app.Flag("close-after", "Wait this long at shutdown before closing HTTP connections.").Default("1m").Duration()
-		kill   = app.Flag("kill-after", "Wait this long at shutdown before exiting.").Default("2m").Duration()
+		app      = kingpin.New(filepath.Base(os.Args[0]), "Authenticates Kubernetes users via JWT tokens.").DefaultEnvars()
+		listen   = app.Flag("listen", "Address at which to expose HTTP webhook.").Default(":10003").String()
+		debug    = app.Flag("debug", "Run with debug logging.").Short('d').Bool()
+		stop     = app.Flag("close-after", "Wait this long at shutdown before closing HTTP connections.").Default("1m").Duration()
+		kill     = app.Flag("kill-after", "Wait this long at shutdown before exiting.").Default("2m").Duration()
+		audience = app.Flag("audience", "Audience for JWT HMAC creation and verification.").Default(jwt.DefaultAudience).String()
+
+		secret = app.Arg("secret", "Secret for JWT HMAC signature and verification.").Required().Envar(envVarName(app.Name, "secret")).String()
 	)
 
 	kingpin.MustParse(app.Parse(os.Args[1:]))
@@ -42,8 +55,8 @@ func main() {
 	}
 	kingpin.FatalIfError(err, "cannot create log")
 
-	a, err := noop.NewAuthenticator([]string{"noop"}, noop.Logger(log))
-	kingpin.FatalIfError(err, "cannot create noop authenticator")
+	a, err := jwt.NewAuthenticator([]byte(*secret), jwt.Audience(*audience), jwt.Logger(log))
+	kingpin.FatalIfError(err, "cannot create JWT authenticator")
 
 	r := httprouter.New()
 	r.HandlerFunc("GET", "/authenticate", logReq(hook.Handler(a), log))
