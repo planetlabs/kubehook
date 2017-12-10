@@ -13,3 +13,7 @@ import:
   version: v2.0.0
   subpackages:
   - pkg/apis/authentication/v1beta1
+- package: github.com/aws/aws-sdk-go
+  version: v1.12.44
+  subpackages:
+  - aws
