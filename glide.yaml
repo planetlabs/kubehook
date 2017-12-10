@@ -6,14 +6,9 @@ import:
 - package: github.com/pkg/errors
   version: v0.8.0
 - package: go.uber.org/zap
-  version: v1.0.0
+  version: v1.7.1
 - package: gopkg.in/alecthomas/kingpin.v2
-  version: v2.2.3
-- package: k8s.io/client-go
-  version: v2.0.0
+  version: v2.2.5
+- package: k8s.io/api
   subpackages:
-  - pkg/apis/authentication/v1beta1
-- package: github.com/aws/aws-sdk-go
-  version: v1.12.44
-  subpackages:
-  - aws
+  - authentication/v1beta1

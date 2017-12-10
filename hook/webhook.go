@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"k8s.io/client-go/pkg/apis/authentication/v1beta1"
+	"k8s.io/api/authentication/v1beta1"
 
 	"github.com/negz/kubehook/auth"
 )

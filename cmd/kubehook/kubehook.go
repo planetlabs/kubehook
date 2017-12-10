@@ -1,16 +1,11 @@
 package main
 
 import (
-	"crypto/tls"
 	"net/http"
 	"os"
 	"path/filepath"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
-
-	"github.com/negz/kubehook/auth/dynamo"
+	"github.com/negz/kubehook/auth/noop"
 	"github.com/negz/kubehook/hook"
 
 	"github.com/facebookgo/httpdown"
@@ -36,12 +31,6 @@ func main() {
 		debug  = app.Flag("debug", "Run with debug logging.").Short('d').Bool()
 		stop   = app.Flag("close-after", "Wait this long at shutdown before closing HTTP connections.").Default("1m").Duration()
 		kill   = app.Flag("kill-after", "Wait this long at shutdown before exiting.").Default("2m").Duration()
-		tlsCrt = app.Flag("tls-cert", "TLS certificate file.").ExistingFile()
-		tlsKey = app.Flag("tls-key", "TLS private key file.").ExistingFile()
-
-		dynamoEndpoint = app.Flag("dynamo-endpoint", "DynamoDb endpoint.").String()
-		dynamoRegion   = app.Flag("dynamo-region", "DynamoDb region.").Default("us-east-1").String()
-		dynamoTable    = app.Flag("dynamo-table", "DynamoDb user table.").Default(dynamo.DefaultUserTable).String()
 	)
 
 	kingpin.MustParse(app.Parse(os.Args[1:]))
@@ -53,19 +42,8 @@ func main() {
 	}
 	kingpin.FatalIfError(err, "cannot create log")
 
-	cfg := aws.NewConfig().WithRegion(*dynamoRegion)
-	if *dynamoEndpoint != "" {
-		log.Info("explicit DynamoDb index endpoint", zap.String("endpoint", *dynamoEndpoint))
-		cfg = cfg.WithEndpoint(*dynamoEndpoint)
-	}
-	session, err := session.NewSession(cfg)
-	kingpin.FatalIfError(err, "cannot connect to AWS")
-
-	a, err := dynamo.NewAuthenticator(
-		dynamodb.New(session),
-		dynamo.Logger(log),
-		dynamo.UserTable(*dynamoTable))
-	kingpin.FatalIfError(err, "cannot connect to DynamoDb")
+	a, err := noop.NewAuthenticator([]string{"noop"}, noop.Logger(log))
+	kingpin.FatalIfError(err, "cannot create noop authenticator")
 
 	r := httprouter.New()
 	r.HandlerFunc("GET", "/authenticate", logReq(hook.Handler(a), log))
@@ -73,11 +51,6 @@ func main() {
 
 	hd := &httpdown.HTTP{StopTimeout: *stop, KillTimeout: *kill}
 	http := &http.Server{Addr: *listen, Handler: r}
-	if *tlsCrt != "" && *tlsKey != "" {
-		crt, err := tls.LoadX509KeyPair(*tlsCrt, *tlsKey)
-		kingpin.FatalIfError(err, "cannot parse TLS certificate and private key")
-		http.TLSConfig = &tls.Config{Certificates: []tls.Certificate{crt}}
-	}
 
 	kingpin.FatalIfError(httpdown.ListenAndServe(http, hd), "HTTP server error")
 }
