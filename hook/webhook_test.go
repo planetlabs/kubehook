@@ -68,7 +68,9 @@ func TestHandler(t *testing.T) {
 				t.Errorf("json.Unmarshal(%v, %s): %v", w.Body, rsp, err)
 			}
 
-			if diff := deep.Equal(tt.rsp, rsp); diff != nil {
+			// Check request status specifically to avoid having to mock out
+			// the metadata creation time.
+			if diff := deep.Equal(tt.rsp.Status, rsp.Status); diff != nil {
 				t.Errorf("want != got: %v", diff)
 			}
 		})

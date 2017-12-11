@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"k8s.io/api/authentication/v1beta1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/negz/kubehook/auth"
 )
@@ -23,7 +24,7 @@ func Handler(a auth.Authenticator) http.HandlerFunc {
 			return
 		}
 
-		rsp := v1beta1.TokenReview{}
+		rsp := &v1beta1.TokenReview{ObjectMeta: v1.ObjectMeta{CreationTimestamp: v1.Now()}}
 		u, err := a.Authenticate(req.Spec.Token)
 		if err != nil {
 			rsp.Status = v1beta1.TokenReviewStatus{Authenticated: false}
