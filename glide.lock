@@ -1,5 +1,5 @@
-hash: 1cebca78b42709c6114a214792ae18e053f7103090b9b98215045b6142166fc3
-updated: 2017-12-09T23:34:29.677477-08:00
+hash: 6190f9f3bfedffd2919e3978bb9b77534f4ec0a92b522a74d7f495e555551175
+updated: 2017-12-10T16:31:31.000116-08:00
 imports:
 - name: github.com/alecthomas/template
   version: a0175ee3bccc567396460bf5acd36800cb10c49c
@@ -27,6 +27,8 @@ imports:
   version: 7abd5745472fff5eb3685386d5fb8bf38683154d
 - name: github.com/go-openapi/swag
   version: f3f9494671f93fcff853e3c6e9e948b3eb71e590
+- name: github.com/go-test/deep
+  version: 9898238679c264cfb10411539f14a0553dc8b295
 - name: github.com/gogo/protobuf
   version: c0656edd0d9eab7c66d1eb0c568f9039345796f7
   subpackages:

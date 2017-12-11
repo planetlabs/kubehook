@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"reflect"
 	"testing"
 
+	"github.com/go-test/deep"
 	"github.com/negz/kubehook/auth/noop"
 
 	"k8s.io/api/authentication/v1beta1"
@@ -23,7 +23,6 @@ func TestHandler(t *testing.T) {
 			name: "Success",
 			req:  &v1beta1.TokenReview{Spec: v1beta1.TokenReviewSpec{Token: "token"}},
 			rsp: &v1beta1.TokenReview{
-				Spec: v1beta1.TokenReviewSpec{Token: "token"},
 				Status: v1beta1.TokenReviewStatus{
 					Authenticated: true,
 					User: v1beta1.UserInfo{
@@ -38,7 +37,6 @@ func TestHandler(t *testing.T) {
 			name: "Failure",
 			req:  &v1beta1.TokenReview{Spec: v1beta1.TokenReviewSpec{Token: ""}},
 			rsp: &v1beta1.TokenReview{
-				Spec:   v1beta1.TokenReviewSpec{Token: ""},
 				Status: v1beta1.TokenReviewStatus{Authenticated: false},
 			},
 		},
@@ -70,8 +68,10 @@ func TestHandler(t *testing.T) {
 				t.Errorf("json.Unmarshal(%v, %s): %v", w.Body, rsp, err)
 			}
 
-			if !reflect.DeepEqual(tt.rsp, rsp) {
-				t.Errorf("\nwant: %+#v\n got: %+#v", tt.rsp, rsp)
+			// Check request status specifically to avoid having to mock out
+			// the metadata creation time.
+			if diff := deep.Equal(tt.rsp.Status, rsp.Status); diff != nil {
+				t.Errorf("want != got: %v", diff)
 			}
 		})
 	}
