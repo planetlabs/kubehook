@@ -1,16 +1,12 @@
 #!/usr/bin/env sh
 
 set -e
+echo "" >coverage.txt
 
-VENDOR="vendor"
-
-[ -d "${VENDOR}" ] && rm -rf "${VENDOR}"
-
-# Ideally we'd use a specific version of Glide.
-go get -u github.com/Masterminds/glide
-
-# Create the vendor directory based on glide.lock
-glide install
-
-# Test!
-go test -race -cover $(glide nv)
+for d in $(go list ./... | grep -v "vendor/"); do
+	go test -race -coverprofile=c $d
+	if [ -f c ]; then
+		cat c >>coverage.txt
+		rm c
+	fi
+done
