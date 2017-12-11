@@ -9,8 +9,6 @@ import (
 	"github.com/negz/kubehook/auth"
 )
 
-var statusFailed v1beta1.TokenReviewStatus = v1beta1.TokenReviewStatus{Authenticated: false}
-
 // Handler returns an HTTP handler function that handles an authentication
 // webhook using the supplied Authenticator.
 func Handler(a auth.Authenticator) http.HandlerFunc {
@@ -18,17 +16,18 @@ func Handler(a auth.Authenticator) http.HandlerFunc {
 		defer r.Body.Close()
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
-		tr := &v1beta1.TokenReview{}
-		err := json.NewDecoder(r.Body).Decode(tr)
+		req := &v1beta1.TokenReview{}
+		err := json.NewDecoder(r.Body).Decode(req)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		u, err := a.Authenticate(tr.Spec.Token)
+		rsp := v1beta1.TokenReview{}
+		u, err := a.Authenticate(req.Spec.Token)
 		if err != nil {
-			tr.Status = statusFailed
-			j, jerr := json.Marshal(tr)
+			rsp.Status = v1beta1.TokenReviewStatus{Authenticated: false}
+			j, jerr := json.Marshal(rsp)
 			if jerr != nil {
 				http.Error(w, jerr.Error(), http.StatusInternalServerError)
 				return
@@ -38,8 +37,8 @@ func Handler(a auth.Authenticator) http.HandlerFunc {
 			return
 		}
 
-		tr.Status = userToStatus(u)
-		j, err := json.Marshal(tr)
+		rsp.Status = userToStatus(u)
+		j, err := json.Marshal(rsp)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
