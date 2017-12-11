@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/negz/kubehook/auth"
+	"github.com/negz/kubehook/generate/lifetime"
+
 	"github.com/pkg/errors"
 )
 
@@ -14,7 +16,7 @@ import (
 const DefaultUserHeader = "X-Forwarded-User"
 
 type req struct {
-	Lifetime time.Duration `json:"lifetime"`
+	Lifetime lifetime.Duration `json:"lifetime"`
 }
 
 type rsp struct {
@@ -57,7 +59,7 @@ func Handler(g auth.Generator, userHeader string) http.HandlerFunc {
 		}
 
 		// TODO(negz): Extract groups from header?
-		t, err := g.Generate(&auth.User{Username: u}, req.Lifetime)
+		t, err := g.Generate(&auth.User{Username: u}, time.Duration(req.Lifetime))
 		if err != nil {
 			badRequest(w, errors.Wrap(err, "cannot generate JSON Web Token"))
 			return

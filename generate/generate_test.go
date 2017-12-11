@@ -7,10 +7,10 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 
 	"github.com/go-test/deep"
 	"github.com/negz/kubehook/auth/noop"
+	"github.com/negz/kubehook/generate/lifetime"
 )
 
 const user = "user"
@@ -27,19 +27,19 @@ func TestHandler(t *testing.T) {
 		{
 			name: "Success",
 			head: map[string]string{DefaultUserHeader: user},
-			req:  &req{Lifetime: 10 * time.Minute},
+			req:  &req{Lifetime: 10 * lifetime.Minute},
 			rsp:  &rsp{Token: user},
 		},
 		{
 			name: "MissingUsernameHeader",
 			head: map[string]string{"some-header": "value"},
-			req:  &req{Lifetime: 10 * time.Minute},
+			req:  &req{Lifetime: 10 * lifetime.Minute},
 			rsp:  &rsp{Error: fmt.Sprintf("cannot extract username from header %s", DefaultUserHeader)},
 		},
 		{
 			name: "MissingUsernameHeaderValue",
 			head: map[string]string{DefaultUserHeader: ""},
-			req:  &req{Lifetime: 10 * time.Minute},
+			req:  &req{Lifetime: 10 * lifetime.Minute},
 			rsp:  &rsp{Error: fmt.Sprintf("cannot extract username from header %s", DefaultUserHeader)},
 		},
 		{
@@ -73,7 +73,7 @@ func TestHandler(t *testing.T) {
 				expectedStatus = http.StatusBadRequest
 			}
 			if w.Code != expectedStatus {
-				t.Fatalf("w.Code: want %v, got %v", expectedStatus, w.Code)
+				t.Errorf("w.Code: want %v, got %v", expectedStatus, w.Code)
 			}
 
 			rsp := &rsp{}
