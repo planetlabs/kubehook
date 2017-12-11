@@ -1,4 +1,4 @@
-# kubehook  [![Godoc](https://img.shields.io/badge/godoc-reference-blue.svg)](https://godoc.org/github.com/negz/kubehook) [![Travis](https://img.shields.io/travis/negz/q.svg?maxAge=300)](https://travis-ci.org/negz/kubehook/) [![Codecov](https://img.shields.io/codecov/c/github/negz/q.svg?maxAge=3600)](https://codecov.io/gh/negz/kubehook/)
+# kubehook  [![Godoc](https://img.shields.io/badge/godoc-reference-blue.svg)](https://godoc.org/github.com/negz/kubehook) [![Travis](https://img.shields.io/travis/negz/kubehook.svg?maxAge=300)](https://travis-ci.org/negz/kubehook/) [![Codecov](https://img.shields.io/codecov/c/github/negz/kubehook.svg?maxAge=3600)](https://codecov.io/gh/negz/kubehook/)
 Kubehook is a [webhook token authentication](https://kubernetes.io/docs/admin/authentication/#webhook-token-authentication)
 service for Kubernetes. It provides one API endpoint to generate [JSON Web Tokens](https://jwt.io), and another to validate tokens on behalf of Kubernetes.
 
