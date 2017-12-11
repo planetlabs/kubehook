@@ -4,12 +4,12 @@ go:
   - 1.9
 
 before_install:
-  - go get -u github.com/golang/dep/cmd/dep
+  - go get -u github.com/Masterminds/glide
   - go get -u github.com/alecthomas/gometalinter
   - gometalinter --install
 
 install:
-  - dep ensure
+  - glide install
 
 script:
   - ./scripts/test.sh
