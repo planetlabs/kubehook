@@ -14,3 +14,5 @@ import:
   - authentication/v1beta1
 - package: github.com/dgrijalva/jwt-go
   version: v3.1.0
+- package: github.com/go-test/deep
+  version: v1.0.0

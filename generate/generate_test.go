@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"reflect"
 	"testing"
 	"time"
 
+	"github.com/go-test/deep"
 	"github.com/negz/kubehook/auth/noop"
 )
 
@@ -81,8 +81,8 @@ func TestHandler(t *testing.T) {
 				t.Fatalf("json.Unmarshal(%v, %s): %v", w.Body, rsp, err)
 			}
 
-			if !reflect.DeepEqual(tt.rsp, rsp) {
-				t.Errorf("\nwant: %+#v\n got: %+#v", tt.rsp, rsp)
+			if diff := deep.Equal(tt.rsp, rsp); diff != nil {
+				t.Errorf("want != got: %v", diff)
 			}
 		})
 	}

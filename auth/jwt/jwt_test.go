@@ -6,6 +6,7 @@ import (
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/go-test/deep"
 	"github.com/negz/kubehook/auth"
 )
 
@@ -91,8 +92,8 @@ func TestAuthenticate(t *testing.T) {
 				}
 				t.Fatalf("m.Authenticate(...): %v", err)
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("m.Authenticate(...): got %v, want %v", got, tt.want)
+			if diff := deep.Equal(got, tt.want); diff != nil {
+				t.Errorf("m.Authenticate(...): got != want: %v", diff)
 			}
 		})
 	}
