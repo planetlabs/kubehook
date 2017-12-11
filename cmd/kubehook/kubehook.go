@@ -44,6 +44,7 @@ func main() {
 		kill     = app.Flag("kill-after", "Wait this long at shutdown before exiting.").Default("2m").Duration()
 		audience = app.Flag("audience", "Audience for JWT HMAC creation and verification.").Default(jwt.DefaultAudience).String()
 		header   = app.Flag("user-header", "HTTP header specifying the authenticated user sending a token generation request.").Default(generate.DefaultUserHeader).String()
+		maxlife  = app.Flag("max-lifetime", "Maximum allowed JWT lifetime, in Go's time.ParseDuration format.").Default(jwt.DefaultMaxLifetime.String()).Duration()
 
 		secret = app.Arg("secret", "Secret for JWT HMAC signature and verification.").Required().Envar(envVarName(app.Name, "secret")).String()
 	)
@@ -57,7 +58,7 @@ func main() {
 	}
 	kingpin.FatalIfError(err, "cannot create log")
 
-	m, err := jwt.NewManager([]byte(*secret), jwt.Audience(*audience), jwt.Logger(log))
+	m, err := jwt.NewManager([]byte(*secret), jwt.Audience(*audience), jwt.MaxLifetime(*maxlife), jwt.Logger(log))
 	kingpin.FatalIfError(err, "cannot create JWT authenticator")
 
 	r := httprouter.New()
