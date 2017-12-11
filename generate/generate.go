@@ -2,6 +2,7 @@ package generate
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -24,16 +25,6 @@ type rsp struct {
 	Error string `json:"error,omitempty"`
 }
 
-func badRequest(w http.ResponseWriter, err error) {
-	j, jerr := json.Marshal(&rsp{Error: err.Error()})
-	if jerr != nil {
-		http.Error(w, jerr.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.WriteHeader(http.StatusBadRequest)
-	w.Write(j)
-}
-
 // Handler returns an HTTP handler function that generates a JSON web token for
 // the requesting user.
 func Handler(g auth.Generator, userHeader string) http.HandlerFunc {
@@ -43,34 +34,34 @@ func Handler(g auth.Generator, userHeader string) http.HandlerFunc {
 
 		u := r.Header.Get(userHeader)
 		if u == "" {
-			badRequest(w, errors.Errorf("cannot extract username from header %s", userHeader))
+			write(w, rsp{Error: fmt.Sprintf("cannot extract username from header %s", userHeader)}, http.StatusBadRequest)
 			return
 		}
 
 		req := &req{}
 		err := json.NewDecoder(r.Body).Decode(req)
 		if err != nil {
-			badRequest(w, errors.Wrap(err, "cannot parse JSON request body"))
+			write(w, rsp{Error: errors.Wrap(err, "cannot parse JSON request body").Error()}, http.StatusBadRequest)
 			return
 		}
 		if req.Lifetime == 0 {
-			badRequest(w, errors.New("must specify desired token lifetime"))
+			write(w, rsp{Error: "must specify desired token lifetime"}, http.StatusBadRequest)
 			return
 		}
 
 		// TODO(negz): Extract groups from header?
 		t, err := g.Generate(&auth.User{Username: u}, time.Duration(req.Lifetime))
 		if err != nil {
-			badRequest(w, errors.Wrap(err, "cannot generate JSON Web Token"))
+			write(w, rsp{Error: errors.Wrap(err, "cannot generate token").Error()}, http.StatusBadRequest)
 			return
 		}
 
-		j, jerr := json.Marshal(&rsp{Token: t})
-		if jerr != nil {
-			http.Error(w, jerr.Error(), http.StatusInternalServerError)
-			return
-		}
-		w.Write(j)
-		return
+		write(w, rsp{Token: t}, http.StatusOK)
 	}
+}
+
+func write(w http.ResponseWriter, r rsp, httpStatus int) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(httpStatus)
+	json.NewEncoder(w).Encode(r)
 }
