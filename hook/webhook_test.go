@@ -8,59 +8,113 @@ import (
 	"testing"
 
 	"github.com/go-test/deep"
-	"github.com/negz/kubehook/auth/noop"
+	"github.com/negz/kubehook/auth"
+	"github.com/pkg/errors"
 
 	"k8s.io/api/authentication/v1beta1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+type predictableAuthenticator struct {
+	err error
+}
+
+func (a *predictableAuthenticator) Authenticate(token string) (*auth.User, error) {
+	return testUser(token).Auth(), a.err
+}
+
+type tu struct {
+	u string
+}
+
+func testUser(u string) *tu {
+	return &tu{u}
+}
+
+func (t *tu) Auth() *auth.User {
+	return &auth.User{Username: t.u, UID: "test/" + t.u, Groups: []string{"test"}}
+}
+
+func (t *tu) UserInfo() v1beta1.UserInfo {
+	return v1beta1.UserInfo{Username: t.u, UID: "test/" + t.u, Groups: []string{"test"}}
+}
 
 func TestHandler(t *testing.T) {
 	cases := []struct {
-		name string
-		req  *v1beta1.TokenReview
-		rsp  *v1beta1.TokenReview
+		name       string
+		err        error
+		req        *v1beta1.TokenReview
+		trStatus   v1beta1.TokenReviewStatus
+		httpStatus int
 	}{
 		{
 			name: "Success",
-			req:  &v1beta1.TokenReview{Spec: v1beta1.TokenReviewSpec{Token: "token"}},
-			rsp: &v1beta1.TokenReview{
-				Status: v1beta1.TokenReviewStatus{
-					Authenticated: true,
-					User: v1beta1.UserInfo{
-						Username: "token",
-						UID:      "noop/token",
-						Groups:   []string{"engineering"},
-					},
-				},
+			req: &v1beta1.TokenReview{
+				TypeMeta:   v1.TypeMeta{APIVersion: authv1Beta1, Kind: tokenReview},
+				ObjectMeta: v1.ObjectMeta{CreationTimestamp: v1.Now()},
+				Spec:       v1beta1.TokenReviewSpec{Token: "token"},
 			},
+			trStatus: v1beta1.TokenReviewStatus{
+				Authenticated: true,
+				User:          testUser("token").UserInfo(),
+			},
+			httpStatus: http.StatusOK,
 		},
 		{
-			name: "Failure",
-			req:  &v1beta1.TokenReview{Spec: v1beta1.TokenReviewSpec{Token: ""}},
-			rsp: &v1beta1.TokenReview{
-				Status: v1beta1.TokenReviewStatus{Authenticated: false},
+			name: "AuthFailed",
+			err:  errors.New("bad token"),
+			req: &v1beta1.TokenReview{
+				TypeMeta:   v1.TypeMeta{APIVersion: authv1Beta1, Kind: tokenReview},
+				ObjectMeta: v1.ObjectMeta{CreationTimestamp: v1.Now()},
+				Spec:       v1beta1.TokenReviewSpec{Token: "badToken"},
 			},
+			trStatus:   v1beta1.TokenReviewStatus{Error: "bad token"},
+			httpStatus: http.StatusForbidden,
+		},
+		{
+			name: "BadAPIVersion",
+			req: &v1beta1.TokenReview{
+				TypeMeta:   v1.TypeMeta{APIVersion: "auth/v2", Kind: tokenReview},
+				ObjectMeta: v1.ObjectMeta{CreationTimestamp: v1.Now()},
+				Spec:       v1beta1.TokenReviewSpec{Token: "badToken"},
+			},
+			trStatus:   v1beta1.TokenReviewStatus{Error: "unsupported API version auth/v2"},
+			httpStatus: http.StatusBadRequest,
+		},
+		{
+			name: "BadKind",
+			req: &v1beta1.TokenReview{
+				TypeMeta:   v1.TypeMeta{APIVersion: authv1Beta1, Kind: "TokenRequest"},
+				ObjectMeta: v1.ObjectMeta{CreationTimestamp: v1.Now()},
+				Spec:       v1beta1.TokenReviewSpec{Token: "badToken"},
+			},
+			trStatus:   v1beta1.TokenReviewStatus{Error: "unsupported Kind TokenRequest"},
+			httpStatus: http.StatusBadRequest,
+		},
+		{
+			name: "MissingToken",
+			req: &v1beta1.TokenReview{
+				TypeMeta:   v1.TypeMeta{APIVersion: authv1Beta1, Kind: tokenReview},
+				ObjectMeta: v1.ObjectMeta{CreationTimestamp: v1.Now()},
+				Spec:       v1beta1.TokenReviewSpec{Token: ""},
+			},
+			trStatus:   v1beta1.TokenReviewStatus{Error: "missing token"},
+			httpStatus: http.StatusBadRequest,
 		},
 	}
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
-			m, err := noop.NewManager(tt.rsp.Status.User.Groups)
-			if err != nil {
-				t.Fatalf("auth.NewNoopAuthenticator(%v): %v", tt.rsp.Status.User.Groups, err)
-			}
+			a := &predictableAuthenticator{tt.err}
 
 			w := httptest.NewRecorder()
 			body, err := json.Marshal(tt.req)
 			if err != nil {
 				t.Fatalf("json.Marshal(%+#v): %v", tt.req, err)
 			}
-			Handler(m)(w, httptest.NewRequest("GET", "/", bytes.NewReader(body)))
-			expectedStatus := http.StatusOK
-			if !tt.rsp.Status.Authenticated {
-				expectedStatus = http.StatusForbidden
-			}
+			Handler(a)(w, httptest.NewRequest("GET", "/", bytes.NewReader(body)))
 
-			if w.Code != expectedStatus {
-				t.Fatalf("w.Code: want %v, got %v", expectedStatus, w.Code)
+			if w.Code != tt.httpStatus {
+				t.Fatalf("w.Code: want %v, got %v", tt.httpStatus, w.Code)
 			}
 
 			rsp := &v1beta1.TokenReview{}
@@ -70,7 +124,7 @@ func TestHandler(t *testing.T) {
 
 			// Check request status specifically to avoid having to mock out
 			// the metadata creation time.
-			if diff := deep.Equal(tt.rsp.Status, rsp.Status); diff != nil {
+			if diff := deep.Equal(tt.trStatus, rsp.Status); diff != nil {
 				t.Errorf("want != got: %v", diff)
 			}
 		})

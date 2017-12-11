@@ -2,12 +2,19 @@ package hook
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
 
 	"k8s.io/api/authentication/v1beta1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/negz/kubehook/auth"
+	"github.com/pkg/errors"
+)
+
+const (
+	authv1Beta1 = "authentication.k8s.io/v1beta1"
+	tokenReview = "TokenReview"
 )
 
 // Handler returns an HTTP handler function that handles an authentication
@@ -15,40 +22,50 @@ import (
 func Handler(a auth.Authenticator) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
-		req := &v1beta1.TokenReview{}
-		err := json.NewDecoder(r.Body).Decode(req)
+		t, err := extractToken(r.Body)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			write(w, v1beta1.TokenReviewStatus{Error: err.Error()}, http.StatusBadRequest)
 			return
 		}
 
-		rsp := &v1beta1.TokenReview{ObjectMeta: v1.ObjectMeta{CreationTimestamp: v1.Now()}}
-		u, err := a.Authenticate(req.Spec.Token)
+		u, err := a.Authenticate(t)
 		if err != nil {
-			rsp.Status = v1beta1.TokenReviewStatus{Authenticated: false}
-			j, jerr := json.Marshal(rsp)
-			if jerr != nil {
-				http.Error(w, jerr.Error(), http.StatusInternalServerError)
-				return
-			}
-			w.WriteHeader(http.StatusForbidden)
-			w.Write(j)
+			write(w, v1beta1.TokenReviewStatus{Error: err.Error()}, http.StatusForbidden)
 			return
 		}
 
-		rsp.Status = userToStatus(u)
-		j, err := json.Marshal(rsp)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		w.Write(j)
+		write(w, tokenReviewStatus(u), http.StatusOK)
 	}
 }
 
-func userToStatus(u *auth.User) v1beta1.TokenReviewStatus {
+func extractToken(b io.Reader) (string, error) {
+	req := &v1beta1.TokenReview{}
+	err := json.NewDecoder(b).Decode(req)
+	switch {
+	case err != nil:
+		return "", errors.Wrap(err, "cannot parse token request")
+	case req.APIVersion != authv1Beta1:
+		return "", errors.Errorf("unsupported API version %s", req.APIVersion)
+	case req.Kind != tokenReview:
+		return "", errors.Errorf("unsupported Kind %s", req.Kind)
+	case req.Spec.Token == "":
+		return "", errors.New("missing token")
+	}
+	return req.Spec.Token, nil
+}
+
+func write(w http.ResponseWriter, trStatus v1beta1.TokenReviewStatus, httpStatus int) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(httpStatus)
+	json.NewEncoder(w).Encode(v1beta1.TokenReview{
+		TypeMeta:   v1.TypeMeta{APIVersion: authv1Beta1, Kind: tokenReview},
+		ObjectMeta: v1.ObjectMeta{CreationTimestamp: v1.Now()},
+		Status:     trStatus,
+	})
+}
+
+func tokenReviewStatus(u *auth.User) v1beta1.TokenReviewStatus {
 	return v1beta1.TokenReviewStatus{
 		Authenticated: true,
 		User: v1beta1.UserInfo{
