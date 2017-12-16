@@ -2,6 +2,13 @@
 Kubehook is a [webhook token authentication](https://kubernetes.io/docs/admin/authentication/#webhook-token-authentication)
 service for Kubernetes. It provides one API endpoint to generate [JSON Web Tokens](https://jwt.io), and another to validate tokens on behalf of Kubernetes.
 
+## Generating a token
+Kubehook provides a small web UI to request tokens:
+![Request a token](frontend/gentoken.png)
+
+Once a token has been requested the UI explains how to use it:
+![Configure a token](frontend/usetoken.png)
+
 ## Usage
 Kubehook assumes it is running behind a reverse proxy that will terminate TLS and authenticate callers. Tokens will be generated for the username provided via a configurable HTTP header - `X-Forwarded-User` by default.
 
