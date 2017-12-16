@@ -1,6 +1,9 @@
 # kubehook  [![Godoc](https://img.shields.io/badge/godoc-reference-blue.svg)](https://godoc.org/github.com/negz/kubehook) [![Travis](https://img.shields.io/travis/negz/kubehook.svg?maxAge=300)](https://travis-ci.org/negz/kubehook/) [![Codecov](https://img.shields.io/codecov/c/github/negz/kubehook.svg?maxAge=3600)](https://codecov.io/gh/negz/kubehook/)
 Kubehook is a [webhook token authentication](https://kubernetes.io/docs/admin/authentication/#webhook-token-authentication)
-service for Kubernetes. It provides one API endpoint to generate [JSON Web Tokens](https://jwt.io), and another to validate tokens on behalf of Kubernetes.
+service for Kubernetes. It provides one API endpoint to generate
+[JSON Web Tokens](https://jwt.io), and another to validate tokens on behalf of
+Kubernetes. Kubehook assumes it is running behind a reverse proxy that
+terminates TLS and authenticates callers.
 
 ## Generating a token
 Kubehook provides a small web UI to request tokens:
@@ -10,7 +13,8 @@ Once a token has been requested the UI explains how to use it:
 ![Configure a token](frontend/usetoken.png)
 
 ## Usage
-Kubehook assumes it is running behind a reverse proxy that will terminate TLS and authenticate callers. Tokens will be generated for the username provided via a configurable HTTP header - `X-Forwarded-User` by default.
+Tokens will be generated for the username provided via a configurable HTTP
+header - `X-Forwarded-User` by default.
 
 To generate a token with a 24 hour lifetime:
 ```bash
