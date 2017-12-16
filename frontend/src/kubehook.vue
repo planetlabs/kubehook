@@ -78,7 +78,7 @@ export default {
     'fetchToken': function() {
       var lifetimeInHours = this.lifetime * 24 + 'h';
       var _this = this;
-      this.axios.post("http://localhost/generate", {lifetime: lifetimeInHours}).then(function(response) {
+      this.axios.post("/generate", {lifetime: lifetimeInHours}).then(function(response) {
         _this.token = response.token;
       }).catch(function(e) {
         if (e.response) {
