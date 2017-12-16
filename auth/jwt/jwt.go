@@ -14,7 +14,7 @@ import (
 // Defaults for JSON Web Tokens.
 const (
 	DefaultAudience    = "github.com/negz/kubehook"
-	DefaultMaxLifetime = 30 * 24 * time.Hour
+	DefaultMaxLifetime = 7 * 24 * time.Hour
 )
 
 type jwtm struct {
