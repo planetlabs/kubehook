@@ -81,11 +81,9 @@ export default {
       this.axios.post("/generate", {lifetime: lifetimeInHours}).then(function(response) {
         _this.token = response.token;
       }).catch(function(e) {
-        if (e.response) {
-          if (e.response.data.error) {
-            _this.error = e.response.data.error;
-            return;
-          }
+        if (e.response && e.response.data.error) {
+          _this.error = e.response.data.error;
+          return;
         }
         if (e.request) {
           _this.error = "could not connect to API";
