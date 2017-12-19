@@ -1,6 +1,6 @@
 <template>
   <div id="kubehook">
-    <b-alert v-if="error" show dismissible variant="danger">
+    <b-alert v-if="error" show dismissible variant="danger" v-on:dismissed="reset">
       <p>Could not generate token: {{error}}</p>
     </b-alert>
     <b-container fluid>
@@ -33,7 +33,8 @@
             <div v-else>
               <b-row>
                 <b-col md="3" order="1" order-md="12">
-                  <b-button block size="lg" variant="primary" v-on:click="fetchToken">Request a token</b-button>
+                  <b-button v-if="error" disabled block size="lg" variant="primary" v-on:click="fetchToken">Request a token</b-button>
+                  <b-button v-else block size="lg" variant="primary" v-on:click="fetchToken">Request a token</b-button>
                   <br />
                 </b-col>
                 <b-col md="9" order="12" order-md="1">
@@ -94,6 +95,9 @@ export default {
           }
           _this.error = e;
         });
+    },
+    reset: function() {
+      this.error = null
     },
     shellSnippet: function() {
       return (
