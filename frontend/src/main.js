@@ -19,18 +19,6 @@ Vue.use(BootstrapVue);
 Vue.use(VueHighlightJS)
 
 Vue.component('v-slider', VueSliderComponent);
-Vue.component('v-editable-code', {
-  template: `<code contenteditable="true" @input="$emit('update:content', $event.target.innerText)"></code>`,
-  props: ['content'],
-  mounted: function () {
-    this.$el.innerText = this.content;
-  },
-  watch: {
-    content: function () {
-      this.$el.innerText = this.content;
-    }
-  }
-});
 
 new Vue({
   el: '#app',
