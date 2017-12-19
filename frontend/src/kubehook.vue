@@ -95,9 +95,6 @@ export default {
           _this.error = e;
         });
     },
-    editClusterID: function(operation) {
-      this.clusterID = operation.api.origElements.innerHTML;
-    },
     shellSnippet: function() {
       return (
         "" +
