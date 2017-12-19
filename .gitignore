@@ -26,3 +26,4 @@ _testmain.go
 # Go
 dist
 vendor
+statik/statik.go

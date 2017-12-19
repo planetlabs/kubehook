@@ -6,16 +6,22 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/negz/kubehook/auth/jwt"
 	"github.com/negz/kubehook/generate"
 	"github.com/negz/kubehook/hook"
 
+	_ "github.com/negz/kubehook/statik"
+
 	"github.com/facebookgo/httpdown"
 	"github.com/julienschmidt/httprouter"
+	"github.com/rakyll/statik/fs"
 	"go.uber.org/zap"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
+
+const indexPath = "/index.html"
 
 func logReq(fn http.HandlerFunc, log *zap.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -61,13 +67,27 @@ func main() {
 	m, err := jwt.NewManager([]byte(*secret), jwt.Audience(*audience), jwt.MaxLifetime(*maxlife), jwt.Logger(log))
 	kingpin.FatalIfError(err, "cannot create JWT authenticator")
 
+	frontend, err := fs.New()
+	kingpin.FatalIfError(err, "cannot load frontend")
+
+	index, err := frontend.Open(indexPath)
+	kingpin.FatalIfError(err, "cannot open frontend index %s", indexPath)
+
 	r := httprouter.New()
+
+	r.HandlerFunc("GET", "/", logReq(func(w http.ResponseWriter, r *http.Request) {
+		http.ServeContent(w, r, indexPath, time.Unix(0, 0), index)
+		r.Body.Close()
+	}, log))
+	r.ServeFiles("/dist/*filepath", frontend)
+
 	r.HandlerFunc("POST", "/generate", logReq(generate.Handler(m, *header), log))
 	r.HandlerFunc("GET", "/authenticate", logReq(hook.Handler(m), log))
+
 	r.HandlerFunc("GET", "/quitquitquit", logReq(func(_ http.ResponseWriter, _ *http.Request) { os.Exit(0) }, log))
 	r.HandlerFunc("GET", "/healthz", logReq(func(w http.ResponseWriter, r *http.Request) {
-		defer r.Body.Close()
 		w.WriteHeader(http.StatusOK)
+		r.Body.Close()
 	}, log))
 
 	hd := &httpdown.HTTP{StopTimeout: *stop, KillTimeout: *kill}
