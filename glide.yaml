@@ -16,3 +16,5 @@ import:
   version: v3.1.0
 - package: github.com/go-test/deep
   version: v1.0.0
+- package: github.com/rakyll/statik
+  version: v0.1.1

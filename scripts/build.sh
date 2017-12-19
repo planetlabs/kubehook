@@ -8,14 +8,27 @@ VENDOR="vendor"
 export GOOS="linux"
 export GOARCH="amd64"
 
-[ -d "${DIST}" ] || mkdir -p "${DIST}"
-[ -d "${VENDOR}" ] && rm -rf "${VENDOR}"
+rm -rf "${DIST}"
+rm -rf "${VENDOR}"
+mkdir -p "${DIST}/frontend"
 
-# Ideally we'd use a specific version of Glide.
+pushd frontend
+npm install
+npm run build
+popd
+
+cp frontend/index.html "${DIST}/frontend/"
+cp -R frontend/dist/ "${DIST}/frontend/"
+
 go get -u github.com/Masterminds/glide
+go get -u github.com/rakyll/statik
 
 # Create the vendor directory based on glide.lock
 glide install
+
+pushd statik
+go generate
+popd
 
 # Build the binary
 go build -o "${DIST}/kubehook" ./cmd/kubehook

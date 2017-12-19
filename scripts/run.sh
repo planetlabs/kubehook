@@ -12,4 +12,4 @@ docker run -d \
 	--name ${NAME} \
 	-p 10003:10003 \
 	-e "KUBEHOOK_SECRET=secret" \
-	"negz/kubehook:${VERSION}" /kubehook/kubehook
+	"negz/kubehook:${VERSION}" /kubehook

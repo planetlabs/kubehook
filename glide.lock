@@ -1,5 +1,5 @@
-hash: 6190f9f3bfedffd2919e3978bb9b77534f4ec0a92b522a74d7f495e555551175
-updated: 2017-12-10T16:31:31.000116-08:00
+hash: bb87d6da531b7f2dabcd8c6dab4c67031373e20d9a9f21f4c029b408814159c4
+updated: 2017-12-19T01:43:40.885681638-08:00
 imports:
 - name: github.com/alecthomas/template
   version: a0175ee3bccc567396460bf5acd36800cb10c49c
@@ -52,6 +52,10 @@ imports:
   version: 8a290539e2e8629dbc4e6bad948158f790ec31f4
 - name: github.com/PuerkitoBio/urlesc
   version: 5bd2802263f21d8788851d5305584c82a5c75d7e
+- name: github.com/rakyll/statik
+  version: fd36b3595eb2ec8da4b8153b107f7ea08504899d
+  subpackages:
+  - fs
 - name: github.com/spf13/pflag
   version: 9ff6c6923cfffbcd502984b8e0c80539a94968b7
 - name: go.uber.org/atomic
