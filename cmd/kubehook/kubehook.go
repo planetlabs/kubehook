@@ -65,6 +65,10 @@ func main() {
 	r.HandlerFunc("POST", "/generate", logReq(generate.Handler(m, *header), log))
 	r.HandlerFunc("GET", "/authenticate", logReq(hook.Handler(m), log))
 	r.HandlerFunc("GET", "/quitquitquit", logReq(func(_ http.ResponseWriter, _ *http.Request) { os.Exit(0) }, log))
+	r.HandlerFunc("GET", "/healthz", logReq(func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
+		w.WriteHeader(http.StatusOK)
+	}, log))
 
 	hd := &httpdown.HTTP{StopTimeout: *stop, KillTimeout: *kill}
 	http := &http.Server{Addr: *listen, Handler: r}
