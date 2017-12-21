@@ -109,7 +109,14 @@ func (m *jwtm) Authenticate(token string) (*auth.User, error) {
 }
 
 func (m *jwtm) Generate(u *auth.User, lifetime time.Duration) (string, error) {
+	log := m.log.With(
+		zap.String("user", u.Username),
+		zap.String("uid", u.UID),
+		zap.Strings("groups", u.Groups),
+		zap.Duration("lifetime", lifetime))
+
 	if lifetime > m.maxLifetime {
+		log.Info("generate", zap.Bool("success", false))
 		return "", errors.Errorf("requested JWT lifetime %s is greater than maximum allowed lifetime %s", lifetime, m.maxLifetime)
 	}
 
@@ -125,7 +132,9 @@ func (m *jwtm) Generate(u *auth.User, lifetime time.Duration) (string, error) {
 
 	ss, err := jwt.NewWithClaims(jwt.SigningMethodHS256, c).SignedString(m.secret)
 	if err != nil {
+		log.Info("generate", zap.Bool("success", false))
 		return "", errors.Wrap(err, "cannot generate JWT")
 	}
+	log.Info("generate", zap.Bool("success", true))
 	return ss, nil
 }

@@ -31,6 +31,7 @@ func logReq(fn http.HandlerFunc, log *zap.Logger) http.HandlerFunc {
 			zap.String("url", r.URL.String()),
 			zap.String("agent", r.UserAgent()),
 			zap.String("addr", r.RemoteAddr))
+		log.Debug("request", zap.Any("headers", r.Header))
 		fn(w, r)
 	}
 }
