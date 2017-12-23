@@ -1,20 +1,25 @@
 package: github.com/negz/kubehook
 import:
-- package: github.com/facebookgo/httpdown
+- package: github.com/dgrijalva/jwt-go
+  version: v3.1.0
 - package: github.com/julienschmidt/httprouter
   version: v1.1
 - package: github.com/pkg/errors
   version: v0.8.0
+- package: github.com/rakyll/statik
+  version: v0.1.1
+  subpackages:
+  - fs
 - package: go.uber.org/zap
   version: v1.7.1
 - package: gopkg.in/alecthomas/kingpin.v2
-  version: v2.2.5
+  version: v2.2.6
 - package: k8s.io/api
   subpackages:
   - authentication/v1beta1
-- package: github.com/dgrijalva/jwt-go
-  version: v3.1.0
+- package: k8s.io/apimachinery
+  subpackages:
+  - pkg/apis/meta/v1
+testImport:
 - package: github.com/go-test/deep
   version: v1.0.0
-- package: github.com/rakyll/statik
-  version: v0.1.1

@@ -1,20 +1,22 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
-	"time"
+	"syscall"
 
 	"github.com/negz/kubehook/auth/jwt"
 	"github.com/negz/kubehook/handlers/authenticate"
 	"github.com/negz/kubehook/handlers/generate"
+	"github.com/negz/kubehook/handlers/util"
 
 	_ "github.com/negz/kubehook/statik"
 
-	"github.com/facebookgo/httpdown"
 	"github.com/julienschmidt/httprouter"
 	"github.com/rakyll/statik/fs"
 	"go.uber.org/zap"
@@ -23,8 +25,8 @@ import (
 
 const indexPath = "/index.html"
 
-func logReq(fn http.HandlerFunc, log *zap.Logger) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func logRequests(h http.Handler, log *zap.Logger) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		log.Info("request",
 			zap.String("host", r.Host),
 			zap.String("method", r.Method),
@@ -32,8 +34,8 @@ func logReq(fn http.HandlerFunc, log *zap.Logger) http.HandlerFunc {
 			zap.String("agent", r.UserAgent()),
 			zap.String("addr", r.RemoteAddr))
 		log.Debug("request", zap.Any("headers", r.Header))
-		fn(w, r)
-	}
+		h.ServeHTTP(w, r)
+	})
 }
 
 // envVarName returns DefaultEnvars style env var names. It can be used for
@@ -47,8 +49,7 @@ func main() {
 		app      = kingpin.New(filepath.Base(os.Args[0]), "Authenticates Kubernetes users via JWT tokens.").DefaultEnvars()
 		listen   = app.Flag("listen", "Address at which to expose HTTP webhook.").Default(":10003").String()
 		debug    = app.Flag("debug", "Run with debug logging.").Short('d').Bool()
-		stop     = app.Flag("close-after", "Wait this long at shutdown before closing HTTP connections.").Default("1m").Duration()
-		kill     = app.Flag("kill-after", "Wait this long at shutdown before exiting.").Default("2m").Duration()
+		grace    = app.Flag("shutdown-grace-period", "Wait this long for sessions to end before shutting down.").Default("1m").Duration()
 		audience = app.Flag("audience", "Audience for JWT HMAC creation and verification.").Default(jwt.DefaultAudience).String()
 		header   = app.Flag("user-header", "HTTP header specifying the authenticated user sending a token generation request.").Default(generate.DefaultUserHeader).String()
 		maxlife  = app.Flag("max-lifetime", "Maximum allowed JWT lifetime, in Go's time.ParseDuration format.").Default(jwt.DefaultMaxLifetime.String()).Duration()
@@ -68,31 +69,37 @@ func main() {
 	m, err := jwt.NewManager([]byte(*secret), jwt.Audience(*audience), jwt.MaxLifetime(*maxlife), jwt.Logger(log))
 	kingpin.FatalIfError(err, "cannot create JWT authenticator")
 
+	r := httprouter.New()
+	s := &http.Server{Addr: *listen, Handler: logRequests(r, log)}
+
+	ctx, cancel := context.WithTimeout(context.Background(), *grace)
+	done := make(chan struct{})
+	shutdown := func() {
+		log.Info("shutdown", zap.Error(s.Shutdown(ctx)))
+		close(done)
+	}
+
+	go func() {
+		sigterm := make(chan os.Signal, 1)
+		signal.Notify(sigterm, syscall.SIGTERM)
+		<-sigterm
+		shutdown()
+	}()
+
 	frontend, err := fs.New()
 	kingpin.FatalIfError(err, "cannot load frontend")
 
 	index, err := frontend.Open(indexPath)
 	kingpin.FatalIfError(err, "cannot open frontend index %s", indexPath)
 
-	r := httprouter.New()
-
-	r.HandlerFunc("GET", "/", logReq(func(w http.ResponseWriter, r *http.Request) {
-		http.ServeContent(w, r, indexPath, time.Unix(0, 0), index)
-		r.Body.Close()
-	}, log))
 	r.ServeFiles("/dist/*filepath", frontend)
+	r.HandlerFunc("GET", "/", util.Content(index))
+	r.HandlerFunc("POST", "/generate", generate.Handler(m, *header))
+	r.HandlerFunc("GET", "/authenticate", authenticate.Handler(m))
+	r.HandlerFunc("GET", "/quitquitquit", util.Run(shutdown))
+	r.HandlerFunc("GET", "/healthz", util.Ping())
 
-	r.HandlerFunc("POST", "/generate", logReq(generate.Handler(m, *header), log))
-	r.HandlerFunc("GET", "/authenticate", logReq(authenticate.Handler(m), log))
-
-	r.HandlerFunc("GET", "/quitquitquit", logReq(func(_ http.ResponseWriter, _ *http.Request) { os.Exit(0) }, log))
-	r.HandlerFunc("GET", "/healthz", logReq(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		r.Body.Close()
-	}, log))
-
-	hd := &httpdown.HTTP{StopTimeout: *stop, KillTimeout: *kill}
-	http := &http.Server{Addr: *listen, Handler: r}
-
-	kingpin.FatalIfError(httpdown.ListenAndServe(http, hd), "HTTP server error")
+	log.Info("shutdown", zap.Error(s.ListenAndServe()))
+	<-done
+	cancel()
 }
