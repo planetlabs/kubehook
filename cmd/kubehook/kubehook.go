@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/negz/kubehook/auth/jwt"
-	"github.com/negz/kubehook/generate"
-	"github.com/negz/kubehook/hook"
+	"github.com/negz/kubehook/handlers/authenticate"
+	"github.com/negz/kubehook/handlers/generate"
 
 	_ "github.com/negz/kubehook/statik"
 
@@ -83,7 +83,7 @@ func main() {
 	r.ServeFiles("/dist/*filepath", frontend)
 
 	r.HandlerFunc("POST", "/generate", logReq(generate.Handler(m, *header), log))
-	r.HandlerFunc("GET", "/authenticate", logReq(hook.Handler(m), log))
+	r.HandlerFunc("GET", "/authenticate", logReq(authenticate.Handler(m), log))
 
 	r.HandlerFunc("GET", "/quitquitquit", logReq(func(_ http.ResponseWriter, _ *http.Request) { os.Exit(0) }, log))
 	r.HandlerFunc("GET", "/healthz", logReq(func(w http.ResponseWriter, r *http.Request) {

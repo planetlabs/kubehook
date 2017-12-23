@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/negz/kubehook/auth"
-	"github.com/negz/kubehook/generate/lifetime"
+	"github.com/negz/kubehook/handlers/generate/lifetime"
 
 	"github.com/pkg/errors"
 )
