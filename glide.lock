@@ -1,5 +1,5 @@
-hash: bb87d6da531b7f2dabcd8c6dab4c67031373e20d9a9f21f4c029b408814159c4
-updated: 2017-12-19T01:43:40.885681638-08:00
+hash: ccf71e763211a5cd6e229fd974fb1a28fd2ca7eef23149561353f6be483723db
+updated: 2017-12-22T19:06:58.928409-08:00
 imports:
 - name: github.com/alecthomas/template
   version: a0175ee3bccc567396460bf5acd36800cb10c49c
@@ -13,12 +13,6 @@ imports:
   version: ff4f55a206334ef123e4f79bbf348980da81ca46
   subpackages:
   - log
-- name: github.com/facebookgo/clock
-  version: 600d898af40aa09a7a93ecb9265d87b0504b6f03
-- name: github.com/facebookgo/httpdown
-  version: a3b1354551a26449fbe05f5d855937f6e7acbd71
-- name: github.com/facebookgo/stats
-  version: 1b76add642e42c6ffba7211ad7b3939ce654526e
 - name: github.com/go-openapi/jsonpointer
   version: 46af16f9f7b149af66e5d1bd010e3574dc06de98
 - name: github.com/go-openapi/jsonreference
@@ -27,8 +21,6 @@ imports:
   version: 7abd5745472fff5eb3685386d5fb8bf38683154d
 - name: github.com/go-openapi/swag
   version: f3f9494671f93fcff853e3c6e9e948b3eb71e590
-- name: github.com/go-test/deep
-  version: 9898238679c264cfb10411539f14a0553dc8b295
 - name: github.com/gogo/protobuf
   version: c0656edd0d9eab7c66d1eb0c568f9039345796f7
   subpackages:
@@ -92,7 +84,7 @@ imports:
   - unicode/norm
   - width
 - name: gopkg.in/alecthomas/kingpin.v2
-  version: 1087e65c9441605df944fb12c33f0fe7072d18ca
+  version: 947dcec5ba9c011838740e680966fd7087a71d0d
 - name: gopkg.in/inf.v0
   version: 3887ee99ecf07df5b447e9b00d9c0b2adaa9f3e4
 - name: gopkg.in/yaml.v2
@@ -129,4 +121,6 @@ imports:
   version: 39a7bf85c140f972372c2a0d1ee40adbf0c8bfe1
   subpackages:
   - pkg/common
-testImports: []
+testImports:
+- name: github.com/go-test/deep
+  version: 9898238679c264cfb10411539f14a0553dc8b295

@@ -1,4 +1,4 @@
-package hook
+package authenticate
 
 import (
 	"encoding/json"
