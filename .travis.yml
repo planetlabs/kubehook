@@ -4,22 +4,31 @@ services:
   - docker
 
 go:
-  - 1.9
+  - 1.9.x
 
-before_install:
-  - go get -u github.com/Masterminds/glide
-  - go get -u github.com/alecthomas/gometalinter
-  - gometalinter --install
 
-install:
-  - glide install
+jobs:
+  include:
+    - stage: test
+      before_install:
+        - go get -u github.com/Masterminds/glide
+        - go get -u github.com/alecthomas/gometalinter
+      install:
+        - glide install
+        - gometalinter --install
+      script:
+        - ./scripts/test.sh
+        - gometalinter --fast --vendor --deadline 5m --disable gotype --disable gas --exclude "\.pb.*\.go" --exclude "_strings\.go" --exclude "_test\.go" --exclude "not checked.+Close" ./...
+      after_success:
+        - bash <(curl -s https://codecov.io/bash)
+    - stage: push
+      install: skip
+      script:
+        - ./scripts/build.sh
+        - docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
+        - ./scripts/push.sh
 
-script:
-  - ./scripts/test.sh
-  - gometalinter --fast --vendor --deadline 5m --disable gotype --disable gas --exclude "\.pb.*\.go" --exclude "_strings\.go" --exclude "_test\.go" --exclude "not checked.+Close" ./...
-
-after_success:
-  - bash <(curl -s https://codecov.io/bash)
-  - '[ "$TRAVIS_BRANCH" == "master" ] && ./scripts/build.sh'
-  - '[ "$TRAVIS_BRANCH" == "master" ] && docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"'
-  - '[ "$TRAVIS_BRANCH" == "master" ] && ./scripts/push.sh'
+stages:
+  - name: test
+  - name: push
+    if: branch = master and not type = pull_request
