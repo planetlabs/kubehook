@@ -25,9 +25,9 @@ func Ping() http.HandlerFunc {
 }
 
 // Content serves the supplied content at the supplied path.
-func Content(c io.ReadSeeker) http.HandlerFunc {
+func Content(c io.ReadSeeker, filename string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		http.ServeContent(w, r, "", time.Unix(0, 0), c)
+		http.ServeContent(w, r, filename, time.Unix(0, 0), c)
 		r.Body.Close()
 	}
 }

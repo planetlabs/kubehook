@@ -93,7 +93,7 @@ func main() {
 	kingpin.FatalIfError(err, "cannot open frontend index %s", indexPath)
 
 	r.ServeFiles("/dist/*filepath", frontend)
-	r.HandlerFunc("GET", "/", util.Content(index))
+	r.HandlerFunc("GET", "/", util.Content(index, filepath.Base(indexPath)))
 	r.HandlerFunc("POST", "/generate", generate.Handler(m, *header))
 	r.HandlerFunc("GET", "/authenticate", authenticate.Handler(m))
 	r.HandlerFunc("GET", "/quitquitquit", util.Run(shutdown))
