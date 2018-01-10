@@ -20,6 +20,6 @@ script:
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
-  - '[ "$TRAVIS_BRANCH" == "master"] && ./scripts/build.sh'
-  - '[ "$TRAVIS_BRANCH" == "master"] && docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"'
-  - '[ "$TRAVIS_BRANCH" == "master"] && ./scripts/push.sh'
+  - '[ "$TRAVIS_BRANCH" == "master" ] && ./scripts/build.sh'
+  - '[ "$TRAVIS_BRANCH" == "master" ] && docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"'
+  - '[ "$TRAVIS_BRANCH" == "master" ] && ./scripts/push.sh'
