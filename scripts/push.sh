@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
 set -e
 
@@ -6,4 +6,3 @@ set -e
 VERSION=$(git rev-parse --short HEAD)
 docker push "negz/kubehook:latest"
 docker push "negz/kubehook:${VERSION}"
-
