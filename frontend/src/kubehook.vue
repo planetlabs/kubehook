@@ -82,7 +82,7 @@ export default {
       this.axios
         .post("/generate", { lifetime: lifetimeInHours })
         .then(function(response) {
-          _this.token = response.token;
+          _this.token = response.data.token;
         })
         .catch(function(e) {
           if (e.response && e.response.data.error) {
