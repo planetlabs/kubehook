@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
+set -ex
 
 DIST="dist"
 VENDOR="vendor"
@@ -19,7 +19,7 @@ npm run build
 popd
 
 cp frontend/index.html "${DIST}/frontend/"
-cp -R frontend/dist/ "${DIST}/frontend/"
+cp frontend/dist/* "${DIST}/frontend/"
 
 go get -u github.com/Masterminds/glide
 go get -u github.com/rakyll/statik
