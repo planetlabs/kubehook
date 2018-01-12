@@ -36,7 +36,7 @@ Content-Length: 208
 To validate a token:
 ```bash
 export TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJnaXRodWIuY29tL25lZ3ova3ViZWhvb2siLCJleHAiOjE1MTMwNjU2MTQsIm5iZiI6MTUxMjk3OTIxNCwic3ViIjoiY29vbHVzZXIifQ.ylxC6wFglLBI0_0e0LQftwuqI95mb0L5Wjnp5aCmPHU
-curl -i -X GET \
+curl -i -X POST \
     -H "Content-Type: application/json" \
     -d "{\"apiVersion\":\"authentication.k8s.io/v1beta1\",\"kind\":\"TokenReview\",\"spec\":{\"token\":\"${TOKEN}\"}}" \
     http://localhost:10003/authenticate
