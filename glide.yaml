@@ -20,6 +20,11 @@ import:
 - package: k8s.io/apimachinery
   subpackages:
   - pkg/apis/meta/v1
+- package: k8s.io/client-go
+  version: v6.0.0
+  subpackages:
+  - tools/clientcmd
+  - tools/clientcmd/api
 testImport:
 - package: github.com/go-test/deep
   version: v1.0.0
