@@ -13,6 +13,7 @@ import (
 	"github.com/negz/kubehook/auth/jwt"
 	"github.com/negz/kubehook/handlers/authenticate"
 	"github.com/negz/kubehook/handlers/generate"
+	"github.com/negz/kubehook/handlers/kubecfg"
 	"github.com/negz/kubehook/handlers/util"
 
 	_ "github.com/negz/kubehook/statik"
@@ -53,6 +54,7 @@ func main() {
 		audience = app.Flag("audience", "Audience for JWT HMAC creation and verification.").Default(jwt.DefaultAudience).String()
 		header   = app.Flag("user-header", "HTTP header specifying the authenticated user sending a token generation request.").Default(generate.DefaultUserHeader).String()
 		maxlife  = app.Flag("max-lifetime", "Maximum allowed JWT lifetime, in Go's time.ParseDuration format.").Default(jwt.DefaultMaxLifetime.String()).Duration()
+		template = app.Flag("kubecfg-template", "A kubecfg file containing clusters to populate with a user and contexts.").ExistingFile()
 
 		secret = app.Arg("secret", "Secret for JWT HMAC signature and verification.").Required().Envar(envVarName(app.Name, "secret")).String()
 	)
@@ -98,6 +100,13 @@ func main() {
 	r.HandlerFunc("POST", "/authenticate", authenticate.Handler(m))
 	r.HandlerFunc("GET", "/quitquitquit", util.Run(shutdown))
 	r.HandlerFunc("GET", "/healthz", util.Ping())
+	r.HandlerFunc("GET", "/kubecfg", util.NotImplemented())
+
+	if *template != "" {
+		tmpl, err := kubecfg.LoadTemplate(*template)
+		kingpin.FatalIfError(err, "cannot load kubeconfig template")
+		r.HandlerFunc("GET", "/kubecfg", kubecfg.Handler(m, *header, tmpl))
+	}
 
 	log.Info("shutdown", zap.Error(s.ListenAndServe()))
 	<-done

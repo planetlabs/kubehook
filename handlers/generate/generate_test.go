@@ -10,7 +10,7 @@ import (
 
 	"github.com/go-test/deep"
 	"github.com/negz/kubehook/auth/noop"
-	"github.com/negz/kubehook/handlers/generate/lifetime"
+	"github.com/negz/kubehook/lifetime"
 )
 
 const user = "user"
