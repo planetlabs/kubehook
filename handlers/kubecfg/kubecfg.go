@@ -26,8 +26,15 @@ type req struct {
 	Lifetime lifetime.Duration `json:"lifetime"`
 }
 
-// Handler returns an HTTP handler function that generates a JSON web token for
-// the requesting user.
+// LoadTemplate loads a kubeconfig template from a file.
+func LoadTemplate(filename string) (*api.Config, error) {
+	c, err := clientcmd.LoadFromFile(filename)
+	return c, errors.Wrapf(err, "cannot load template from %v", filename)
+}
+
+// Handler returns an HTTP handler function that generates a kubeconfig file
+// preconfigured with a set of clusters and a JSON Web Token for the requesting
+// user.
 func Handler(g auth.Generator, userHeader string, template *api.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()

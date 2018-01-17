@@ -31,3 +31,11 @@ func Content(c io.ReadSeeker, filename string) http.HandlerFunc {
 		r.Body.Close()
 	}
 }
+
+// NotImplemented always returns HTTP 501
+func NotImplemented() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNotImplemented)
+		r.Body.Close()
+	}
+}
