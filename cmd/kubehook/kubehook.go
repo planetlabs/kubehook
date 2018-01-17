@@ -100,12 +100,12 @@ func main() {
 	r.HandlerFunc("POST", "/authenticate", authenticate.Handler(m))
 	r.HandlerFunc("GET", "/quitquitquit", util.Run(shutdown))
 	r.HandlerFunc("GET", "/healthz", util.Ping())
-	r.HandlerFunc("GET", "/kubecfg", util.NotImplemented())
+	r.HandlerFunc("POST", "/kubecfg", util.NotImplemented())
 
 	if *template != "" {
 		tmpl, err := kubecfg.LoadTemplate(*template)
 		kingpin.FatalIfError(err, "cannot load kubeconfig template")
-		r.HandlerFunc("GET", "/kubecfg", kubecfg.Handler(m, *header, tmpl))
+		r.HandlerFunc("POST", "/kubecfg", kubecfg.Handler(m, *header, tmpl))
 	}
 
 	log.Info("shutdown", zap.Error(s.ListenAndServe()))
