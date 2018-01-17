@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/negz/kubehook/auth"
-	"github.com/negz/kubehook/handlers/generate/lifetime"
+	"github.com/negz/kubehook/lifetime"
 
 	"github.com/pkg/errors"
 )
@@ -51,7 +51,7 @@ func Handler(g auth.Generator, userHeader string) http.HandlerFunc {
 		// TODO(negz): Extract groups from header?
 		t, err := g.Generate(&auth.User{Username: u}, time.Duration(req.Lifetime))
 		if err != nil {
-			write(w, rsp{Error: errors.Wrap(err, "cannot generate token").Error()}, http.StatusBadRequest)
+			write(w, rsp{Error: errors.Wrap(err, "cannot generate token").Error()}, http.StatusInternalServerError)
 			return
 		}
 
