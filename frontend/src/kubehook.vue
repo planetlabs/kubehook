@@ -94,23 +94,21 @@ export default {
     };
   },
   created: function() {
-    this.kubeCfgEnabled();
+    this.detectKubeCfg();
   },
   methods: {
     inHours: function(lifetime) {
       return lifetime * 24 + "h";
     },
-    kubeCfgEnabled: function() {
+    detectKubeCfg: function() {
       var _this = this;
       this.axios
-        .post("/kubecfg", { lifetime: "1s" })
+        .get("/kubecfg?lifetime=1s")
         .then(function(response) {
           _this.kubecfg = true;
-          console.log("/kubecfg endpoint enabled.");
         })
         .catch(function(e) {
-          _this.error = false;
-          console.log("/kubecfg endpoint disabled.");
+          _this.kubecfg = false;
         });
     },
     kubeCfgLink: function() {
