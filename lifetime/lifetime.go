@@ -24,12 +24,22 @@ func (d Duration) String() string {
 	return time.Duration(d).String()
 }
 
+// ParseDuration parses a string with time.ParseDuration, but returns a
+// lifetime.Duration.
+func ParseDuration(s string) (Duration, error) {
+	td, err := time.ParseDuration(s)
+	if err != nil {
+		return 0, err
+	}
+	return Duration(td), nil
+}
+
 // MarshalJSON marshals a Duration into a time.ParseDuration compatible string.
 func (d Duration) MarshalJSON() ([]byte, error) {
 	return []byte(`"` + d.String() + `"`), nil
 }
 
-// UnmarshalJSON unmarshals a Duration into from a time.ParseDuration compatible
+// UnmarshalJSON unmarshals a Duration from a time.ParseDuration compatible
 // string.
 func (d *Duration) UnmarshalJSON(data []byte) error {
 	var s string
@@ -37,11 +47,11 @@ func (d *Duration) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	td, err := time.ParseDuration(s)
+	p, err := ParseDuration(s)
 	if err != nil {
 		return err
 	}
 
-	*d = Duration(td)
+	*d = p
 	return nil
 }
