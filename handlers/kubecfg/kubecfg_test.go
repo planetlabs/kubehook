@@ -1,8 +1,6 @@
 package kubecfg
 
 import (
-	"bytes"
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -10,7 +8,6 @@ import (
 	"github.com/go-test/deep"
 
 	"github.com/negz/kubehook/auth/noop"
-	"github.com/negz/kubehook/lifetime"
 
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
@@ -24,7 +21,7 @@ func TestHandler(t *testing.T) {
 	cases := []struct {
 		name     string
 		head     map[string]string
-		req      *req
+		path     string
 		template *api.Config
 		status   int
 		want     api.Config
@@ -32,7 +29,30 @@ func TestHandler(t *testing.T) {
 		{
 			name: "Success",
 			head: map[string]string{DefaultUserHeader: user},
-			req:  &req{Lifetime: 10 * lifetime.Minute},
+			path: "/?lifetime=72h",
+			template: &api.Config{
+				Clusters: map[string]*api.Cluster{
+					"a": &api.Cluster{Server: "https://example.org", CertificateAuthorityData: []byte("PAM")},
+					"b": &api.Cluster{Server: "https://example.net", CertificateAuthorityData: []byte("PAM")},
+				},
+			},
+			status: http.StatusOK,
+			want: api.Config{
+				Clusters: map[string]*api.Cluster{
+					"a": &api.Cluster{Server: "https://example.org", CertificateAuthorityData: []byte("PAM")},
+					"b": &api.Cluster{Server: "https://example.net", CertificateAuthorityData: []byte("PAM")},
+				},
+				Contexts: map[string]*api.Context{
+					"a": &api.Context{AuthInfo: templateUser, Cluster: "a"},
+					"b": &api.Context{AuthInfo: templateUser, Cluster: "b"},
+				},
+				AuthInfos: map[string]*api.AuthInfo{templateUser: &api.AuthInfo{Token: user}},
+			},
+		},
+		{
+			name: "ExtraQueryParams",
+			head: map[string]string{DefaultUserHeader: user},
+			path: "/?blorp=true&lifetime=72h&lifetime=48h",
 			template: &api.Config{
 				Clusters: map[string]*api.Cluster{
 					"a": &api.Cluster{Server: "https://example.org", CertificateAuthorityData: []byte("PAM")},
@@ -55,21 +75,28 @@ func TestHandler(t *testing.T) {
 		{
 			name:     "MissingUsernameHeader",
 			head:     map[string]string{"some-header": "value"},
-			req:      &req{Lifetime: 10 * lifetime.Minute},
+			path:     "/?lifetime=72h",
 			template: &api.Config{},
 			status:   http.StatusBadRequest,
 		},
 		{
 			name:     "MissingUsernameHeaderValue",
 			head:     map[string]string{DefaultUserHeader: ""},
-			req:      &req{Lifetime: 10 * lifetime.Minute},
+			path:     "/?lifetime=72h",
 			template: &api.Config{},
 			status:   http.StatusBadRequest,
 		},
 		{
 			name:     "MissingLifetime",
 			head:     map[string]string{DefaultUserHeader: user},
-			req:      &req{},
+			path:     "/",
+			template: &api.Config{},
+			status:   http.StatusBadRequest,
+		},
+		{
+			name:     "EmptyLifetime",
+			head:     map[string]string{DefaultUserHeader: user},
+			path:     "/?lifetime=",
 			template: &api.Config{},
 			status:   http.StatusBadRequest,
 		},
@@ -82,11 +109,7 @@ func TestHandler(t *testing.T) {
 			}
 
 			w := httptest.NewRecorder()
-			body, err := json.Marshal(tt.req)
-			if err != nil {
-				t.Fatalf("json.Marshal(%+#v): %v", tt.req, err)
-			}
-			r := httptest.NewRequest("POST", "/", bytes.NewReader(body))
+			r := httptest.NewRequest("GET", tt.path, nil)
 			for k, v := range tt.head {
 				r.Header.Set(k, v)
 			}
@@ -94,7 +117,7 @@ func TestHandler(t *testing.T) {
 			Handler(m, DefaultUserHeader, tt.template)(w, r)
 
 			if w.Code != tt.status {
-				t.Errorf("w.Code: want %v, got %v", tt.status, w.Code)
+				t.Errorf("w.Code: want %v, got %v - %s", tt.status, w.Code, w.Body.Bytes())
 			}
 
 			if w.Code != http.StatusOK {

@@ -1,7 +1,6 @@
 package kubecfg
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -19,12 +18,9 @@ const (
 	// currently authenticated user.
 	DefaultUserHeader = "X-Forwarded-User"
 
-	templateUser = "kubehook"
+	templateUser       = "kubehook"
+	queryParamLifetime = "lifetime"
 )
-
-type req struct {
-	Lifetime lifetime.Duration `json:"lifetime"`
-}
 
 // LoadTemplate loads a kubeconfig template from a file.
 func LoadTemplate(filename string) (*api.Config, error) {
@@ -45,19 +41,14 @@ func Handler(g auth.Generator, userHeader string, template *api.Config) http.Han
 			return
 		}
 
-		req := &req{}
-		err := json.NewDecoder(r.Body).Decode(req)
+		l, err := lifetime.ParseDuration(r.URL.Query().Get(queryParamLifetime))
 		if err != nil {
-			http.Error(w, errors.Wrap(err, "cannot parse JSON request body").Error(), http.StatusBadRequest)
-			return
-		}
-		if req.Lifetime == 0 {
-			http.Error(w, "must specify desired token lifetime", http.StatusBadRequest)
+			http.Error(w, errors.Wrapf(err, "cannot parse query parameter %v", queryParamLifetime).Error(), http.StatusBadRequest)
 			return
 		}
 
 		// TODO(negz): Extract groups from header?
-		t, err := g.Generate(&auth.User{Username: u}, time.Duration(req.Lifetime))
+		t, err := g.Generate(&auth.User{Username: u}, time.Duration(l))
 		if err != nil {
 			http.Error(w, errors.Wrap(err, "cannot generate token").Error(), http.StatusInternalServerError)
 			return
