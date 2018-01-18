@@ -20,13 +20,30 @@
                   <pre v-highlightjs="token"><code class="bash"></code></pre>
                   <br />
                   <h3>Using your token</h3>
+                  <div v-if="kubecfg">
                   <b-form inline>
                     <p>
-                    Run the following commands to use your new token with
-                    <b-input v-model="clusterID" size="sm" required />
+                      Save <a :href="kubeCfgLink()">this file</a> as <code>~/.kube/config</code>
+                      to automatically setup common clusters with your new
+                      token.
                   </p>
                   </b-form>
-                  <pre v-highlightjs="shellSnippet()"><code class="bash"></code></pre>
+                  <pre v-highlightjs="snippetKubecfg()"><code class="bash"></code></pre>
+                  <br />
+                  <h3>Authenticating manually</h3>
+                  </div>
+                  <b-form inline>
+                    <p v-if="kubecfg">
+                      Prefer to keep your existing <code>~/.kube/config</code>?
+                      Run the following to use your token with
+                      <b-input v-model="clusterID" size="sm" required />
+                    </p>
+                    <p v-else>
+                      Run the following to use your token with
+                      <b-input v-model="clusterID" size="sm" required />
+                    </p>
+                  </b-form>
+                  <pre v-highlightjs="snippetManual()"><code class="bash"></code></pre>
                 </b-col>
               </b-row>
             </div>
@@ -69,18 +86,40 @@ export default {
   },
   data: function() {
     return {
+      kubecfg: false,
       lifetime: 2,
       clusterID: "radcluster",
       token: null,
       error: null
     };
   },
+  created: function() {
+    this.kubeCfgEnabled();
+  },
   methods: {
-    fetchToken: function() {
-      var lifetimeInHours = this.lifetime * 24 + "h";
+    inHours: function(lifetime) {
+      return lifetime * 24 + "h";
+    },
+    kubeCfgEnabled: function() {
       var _this = this;
       this.axios
-        .post("/generate", { lifetime: lifetimeInHours })
+        .post("/kubecfg", { lifetime: "1s" })
+        .then(function(response) {
+          _this.kubecfg = true;
+          console.log("/kubecfg endpoint enabled.");
+        })
+        .catch(function(e) {
+          _this.error = false;
+          console.log("/kubecfg endpoint disabled.");
+        });
+    },
+    kubeCfgLink: function() {
+      return "/kubecfg?lifetime=" + this.inHours(this.lifetime);
+    },
+    fetchToken: function() {
+      var _this = this;
+      this.axios
+        .post("/generate", { lifetime: this.inHours(this.lifetime) })
         .then(function(response) {
           _this.token = response.data.token;
         })
@@ -97,23 +136,34 @@ export default {
         });
     },
     reset: function() {
-      this.error = null
+      this.error = null;
     },
-    shellSnippet: function() {
+    snippetKubecfg: function() {
       return (
-        "" +
-        "export KUBE_CLUSTER=" +
+        "# ~/.kube/config defines 'contexts' that associate your token with a cluster.\n" +
+        "kubectl config get-contexts\n" +
+        "\n" +
+        "# Use a context to discover available namespaces.\n" +
+        "kubectl --context=example get namespaces"
+      );
+    },
+    snippetManual: function() {
+      return (
+        "export CLUSTER=" +
         this.clusterID +
         "\n" +
-        'export KUBE_TOKEN="' +
+        'export TOKEN="' +
         this.token +
         '"\n' +
         "\n" +
-        "# Create or update your Kubernetes user.\n" +
-        'kubectl config set-credentials ${KUBE_CLUSTER} --token="${KUBE_TOKEN}"\n' +
+        "# Create or update a user.\n" +
+        'kubectl config set-credentials ${CLUSTER} --token="${TOKEN}"\n' +
         "\n" +
-        "# Associate your Kubernetes user with an existing cluster.\n" +
-        "kubectl config set-context ${KUBE_CLUSTER} --cluster=${KUBE_CLUSTER} --user=${KUBE_CLUSTER}\n"
+        "# Associate your user with an existing cluster.\n" +
+        "kubectl config set-context ${CLUSTER} --cluster=${CLUSTER} --user=${CLUSTER}\n" +
+        "\n" +
+        "# Use your context to discover available namespaces.\n" +
+        "kubectl --context=${CLUSTER} get namespaces"
       );
     }
   }
