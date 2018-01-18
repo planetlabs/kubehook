@@ -11,10 +11,10 @@ cat <<EOF >$CFG/template
 apiVersion: v1
 kind: Config
 clusters:
-- name: kuberos
+- name: kubehook
   cluster:
     certificate-authority-data: REDACTED
-    server: https://kuberos.example.org
+    server: https://kubehook.example.org
 EOF
 
 docker kill ${NAME} || true
