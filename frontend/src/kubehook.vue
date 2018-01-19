@@ -44,6 +44,8 @@
                     </p>
                   </b-form>
                   <pre v-highlightjs="snippetManual()"><code class="bash"></code></pre>
+                  <p>Refreshing your existing token? Run this.</p>
+                  <pre v-highlightjs="snippetUpdate()"><code class="bash"></code></pre>
                 </b-col>
               </b-row>
             </div>
@@ -155,13 +157,18 @@ export default {
         '"\n' +
         "\n" +
         "# Create or update a user.\n" +
-        'kubectl config set-credentials ${CLUSTER} --token="${TOKEN}"\n' +
+        'kubectl config set-credentials kubehook --token="${TOKEN}"\n' +
         "\n" +
         "# Associate your user with an existing cluster.\n" +
-        "kubectl config set-context ${CLUSTER} --cluster=${CLUSTER} --user=${CLUSTER}\n" +
+        "kubectl config set-context ${CLUSTER} --cluster=${CLUSTER} --user=kubehook\n" +
         "\n" +
         "# Use your context to discover available namespaces.\n" +
         "kubectl --context=${CLUSTER} get namespaces"
+      );
+    },
+    snippetUpdate: function() {
+      return (
+        'kubectl config set-credentials kubehook --token="' + this.token + '"\n'
       );
     }
   }
