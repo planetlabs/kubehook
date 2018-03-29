@@ -1,6 +1,4 @@
-// TODO(negz): Move to root of handlers package.
-
-package util
+package handlers
 
 import (
 	"io"

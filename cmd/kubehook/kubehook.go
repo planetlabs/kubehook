@@ -11,10 +11,10 @@ import (
 	"syscall"
 
 	"github.com/negz/kubehook/auth/jwt"
+	"github.com/negz/kubehook/handlers"
 	"github.com/negz/kubehook/handlers/authenticate"
 	"github.com/negz/kubehook/handlers/generate"
 	"github.com/negz/kubehook/handlers/kubecfg"
-	"github.com/negz/kubehook/handlers/util"
 	_ "github.com/negz/kubehook/statik"
 
 	"github.com/julienschmidt/httprouter"
@@ -51,9 +51,9 @@ func main() {
 		debug            = app.Flag("debug", "Run with debug logging.").Short('d').Bool()
 		grace            = app.Flag("shutdown-grace-period", "Wait this long for sessions to end before shutting down.").Default("1m").Duration()
 		audience         = app.Flag("audience", "Audience for JWT HMAC creation and verification.").Default(jwt.DefaultAudience).String()
-		userHeader       = app.Flag("user-header", "HTTP header specifying the authenticated user sending a token generation request.").Default(util.DefaultUserHeader).String()
-		groupHeader      = app.Flag("group-header", "HTTP header specifying the authenticated user's groups.").Default(util.DefaultGroupHeader).String()
-		groupHeaderDelim = app.Flag("group-header-delimiter", "Delimiter separating group names in the group-header.").Default(util.DefaultGroupHeaderDelimiter).String()
+		userHeader       = app.Flag("user-header", "HTTP header specifying the authenticated user sending a token generation request.").Default(handlers.DefaultUserHeader).String()
+		groupHeader      = app.Flag("group-header", "HTTP header specifying the authenticated user's groups.").Default(handlers.DefaultGroupHeader).String()
+		groupHeaderDelim = app.Flag("group-header-delimiter", "Delimiter separating group names in the group-header.").Default(handlers.DefaultGroupHeaderDelimiter).String()
 		maxlife          = app.Flag("max-lifetime", "Maximum allowed JWT lifetime, in Go's time.ParseDuration format.").Default(jwt.DefaultMaxLifetime.String()).Duration()
 		template         = app.Flag("kubecfg-template", "A kubecfg file containing clusters to populate with a user and contexts.").ExistingFile()
 
@@ -95,25 +95,25 @@ func main() {
 	index, err := frontend.Open(indexPath)
 	kingpin.FatalIfError(err, "cannot open frontend index %s", indexPath)
 
-	h := util.AuthHeaders{
+	h := handlers.AuthHeaders{
 		User:           *userHeader,
 		Group:          *groupHeader,
 		GroupDelimiter: *groupHeaderDelim,
 	}
 
 	r.ServeFiles("/dist/*filepath", frontend)
-	r.HandlerFunc("GET", "/", util.Content(index, filepath.Base(indexPath)))
+	r.HandlerFunc("GET", "/", handlers.Content(index, filepath.Base(indexPath)))
 	r.HandlerFunc("POST", "/generate", generate.Handler(m, h))
 	r.HandlerFunc("POST", "/authenticate", authenticate.Handler(m))
-	r.HandlerFunc("GET", "/quitquitquit", util.Run(shutdown))
-	r.HandlerFunc("GET", "/healthz", util.Ping())
+	r.HandlerFunc("GET", "/quitquitquit", handlers.Run(shutdown))
+	r.HandlerFunc("GET", "/healthz", handlers.Ping())
 
 	if *template != "" {
 		t, err := kubecfg.LoadTemplate(*template)
 		kingpin.FatalIfError(err, "cannot load kubeconfig template")
 		r.HandlerFunc("GET", "/kubecfg", kubecfg.Handler(m, t, h))
 	} else {
-		r.HandlerFunc("GET", "/kubecfg", util.NotImplemented())
+		r.HandlerFunc("GET", "/kubecfg", handlers.NotImplemented())
 	}
 
 	log.Info("shutdown", zap.Error(s.ListenAndServe()))

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/negz/kubehook/auth"
-	"github.com/negz/kubehook/handlers/util"
+	"github.com/negz/kubehook/handlers"
 	"github.com/negz/kubehook/lifetime"
 
 	"github.com/pkg/errors"
@@ -24,7 +24,7 @@ type rsp struct {
 
 // Handler returns an HTTP handler function that generates a JSON web token for
 // the requesting user.
-func Handler(g auth.Generator, h util.AuthHeaders) http.HandlerFunc {
+func Handler(g auth.Generator, h handlers.AuthHeaders) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 

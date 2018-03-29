@@ -10,7 +10,7 @@ import (
 
 	"github.com/go-test/deep"
 	"github.com/negz/kubehook/auth/noop"
-	"github.com/negz/kubehook/handlers/util"
+	"github.com/negz/kubehook/handlers"
 	"github.com/negz/kubehook/lifetime"
 )
 
@@ -27,7 +27,7 @@ func TestHandler(t *testing.T) {
 	}{
 		{
 			name: "Success",
-			head: map[string]string{util.DefaultUserHeader: user},
+			head: map[string]string{handlers.DefaultUserHeader: user},
 			req:  &req{Lifetime: 10 * lifetime.Minute},
 			rsp:  &rsp{Token: user},
 		},
@@ -35,17 +35,17 @@ func TestHandler(t *testing.T) {
 			name: "MissingUsernameHeader",
 			head: map[string]string{"some-header": "value"},
 			req:  &req{Lifetime: 10 * lifetime.Minute},
-			rsp:  &rsp{Error: fmt.Sprintf("cannot extract username from header %s", util.DefaultUserHeader)},
+			rsp:  &rsp{Error: fmt.Sprintf("cannot extract username from header %s", handlers.DefaultUserHeader)},
 		},
 		{
 			name: "MissingUsernameHeaderValue",
-			head: map[string]string{util.DefaultUserHeader: ""},
+			head: map[string]string{handlers.DefaultUserHeader: ""},
 			req:  &req{Lifetime: 10 * lifetime.Minute},
-			rsp:  &rsp{Error: fmt.Sprintf("cannot extract username from header %s", util.DefaultUserHeader)},
+			rsp:  &rsp{Error: fmt.Sprintf("cannot extract username from header %s", handlers.DefaultUserHeader)},
 		},
 		{
 			name: "MissingLifetime",
-			head: map[string]string{util.DefaultUserHeader: user},
+			head: map[string]string{handlers.DefaultUserHeader: user},
 			req:  &req{},
 			rsp:  &rsp{Error: "must specify desired token lifetime"},
 		},
@@ -67,10 +67,10 @@ func TestHandler(t *testing.T) {
 				r.Header.Set(k, v)
 			}
 
-			h := util.AuthHeaders{
-				User:           util.DefaultUserHeader,
-				Group:          util.DefaultGroupHeader,
-				GroupDelimiter: util.DefaultGroupHeaderDelimiter,
+			h := handlers.AuthHeaders{
+				User:           handlers.DefaultUserHeader,
+				Group:          handlers.DefaultGroupHeader,
+				GroupDelimiter: handlers.DefaultGroupHeaderDelimiter,
 			}
 			Handler(m, h)(w, r)
 

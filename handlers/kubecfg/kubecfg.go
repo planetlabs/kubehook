@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/negz/kubehook/auth"
-	"github.com/negz/kubehook/handlers/util"
+	"github.com/negz/kubehook/handlers"
 	"github.com/negz/kubehook/lifetime"
 
 	"github.com/pkg/errors"
@@ -28,7 +28,7 @@ func LoadTemplate(filename string) (*api.Config, error) {
 // Handler returns an HTTP handler function that generates a kubeconfig file
 // preconfigured with a set of clusters and a JSON Web Token for the requesting
 // user.
-func Handler(g auth.Generator, template *api.Config, h util.AuthHeaders) http.HandlerFunc {
+func Handler(g auth.Generator, template *api.Config, h handlers.AuthHeaders) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 
