@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/negz/kubehook/auth"
+	"github.com/negz/kubehook/handlers/util"
 	"github.com/negz/kubehook/lifetime"
 
 	"github.com/pkg/errors"
@@ -14,10 +15,6 @@ import (
 )
 
 const (
-	// DefaultUserHeader specifies the default header used to determine the
-	// currently authenticated user.
-	DefaultUserHeader = "X-Forwarded-User"
-
 	templateUser       = "kubehook"
 	queryParamLifetime = "lifetime"
 )
@@ -31,13 +28,13 @@ func LoadTemplate(filename string) (*api.Config, error) {
 // Handler returns an HTTP handler function that generates a kubeconfig file
 // preconfigured with a set of clusters and a JSON Web Token for the requesting
 // user.
-func Handler(g auth.Generator, userHeader string, template *api.Config) http.HandlerFunc {
+func Handler(g auth.Generator, template *api.Config, h util.AuthHeaders) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 
-		u := r.Header.Get(userHeader)
+		u := r.Header.Get(h.User)
 		if u == "" {
-			http.Error(w, fmt.Sprintf("cannot extract username from header %s", userHeader), http.StatusBadRequest)
+			http.Error(w, fmt.Sprintf("cannot extract username from header %s", h.User), http.StatusBadRequest)
 			return
 		}
 

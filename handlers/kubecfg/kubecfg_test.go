@@ -8,6 +8,7 @@ import (
 	"github.com/go-test/deep"
 
 	"github.com/negz/kubehook/auth/noop"
+	"github.com/negz/kubehook/handlers/util"
 
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
@@ -28,7 +29,7 @@ func TestHandler(t *testing.T) {
 	}{
 		{
 			name: "Success",
-			head: map[string]string{DefaultUserHeader: user},
+			head: map[string]string{util.DefaultUserHeader: user},
 			path: "/?lifetime=72h",
 			template: &api.Config{
 				Clusters: map[string]*api.Cluster{
@@ -51,7 +52,7 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			name: "ExtraQueryParams",
-			head: map[string]string{DefaultUserHeader: user},
+			head: map[string]string{util.DefaultUserHeader: user},
 			path: "/?blorp=true&lifetime=72h&lifetime=48h",
 			template: &api.Config{
 				Clusters: map[string]*api.Cluster{
@@ -81,21 +82,21 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			name:     "MissingUsernameHeaderValue",
-			head:     map[string]string{DefaultUserHeader: ""},
+			head:     map[string]string{util.DefaultUserHeader: ""},
 			path:     "/?lifetime=72h",
 			template: &api.Config{},
 			status:   http.StatusBadRequest,
 		},
 		{
 			name:     "MissingLifetime",
-			head:     map[string]string{DefaultUserHeader: user},
+			head:     map[string]string{util.DefaultUserHeader: user},
 			path:     "/",
 			template: &api.Config{},
 			status:   http.StatusBadRequest,
 		},
 		{
 			name:     "EmptyLifetime",
-			head:     map[string]string{DefaultUserHeader: user},
+			head:     map[string]string{util.DefaultUserHeader: user},
 			path:     "/?lifetime=",
 			template: &api.Config{},
 			status:   http.StatusBadRequest,
@@ -114,7 +115,12 @@ func TestHandler(t *testing.T) {
 				r.Header.Set(k, v)
 			}
 
-			Handler(m, DefaultUserHeader, tt.template)(w, r)
+			h := util.AuthHeaders{
+				User:           util.DefaultUserHeader,
+				Group:          util.DefaultGroupHeader,
+				GroupDelimiter: util.DefaultGroupHeaderDelimiter,
+			}
+			Handler(m, tt.template, h)(w, r)
 
 			if w.Code != tt.status {
 				t.Errorf("w.Code: want %v, got %v - %s", tt.status, w.Code, w.Body.Bytes())

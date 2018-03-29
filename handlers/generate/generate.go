@@ -7,14 +7,11 @@ import (
 	"time"
 
 	"github.com/negz/kubehook/auth"
+	"github.com/negz/kubehook/handlers/util"
 	"github.com/negz/kubehook/lifetime"
 
 	"github.com/pkg/errors"
 )
-
-// DefaultUserHeader specifies the default header used to determine the
-// currently authenticated user.
-const DefaultUserHeader = "X-Forwarded-User"
 
 type req struct {
 	Lifetime lifetime.Duration `json:"lifetime"`
@@ -27,13 +24,13 @@ type rsp struct {
 
 // Handler returns an HTTP handler function that generates a JSON web token for
 // the requesting user.
-func Handler(g auth.Generator, userHeader string) http.HandlerFunc {
+func Handler(g auth.Generator, h util.AuthHeaders) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 
-		u := r.Header.Get(userHeader)
+		u := r.Header.Get(h.User)
 		if u == "" {
-			write(w, rsp{Error: fmt.Sprintf("cannot extract username from header %s", userHeader)}, http.StatusBadRequest)
+			write(w, rsp{Error: fmt.Sprintf("cannot extract username from header %s", h.User)}, http.StatusBadRequest)
 			return
 		}
 
