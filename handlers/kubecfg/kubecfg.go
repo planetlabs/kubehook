@@ -3,6 +3,7 @@ package kubecfg
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/negz/kubehook/auth"
@@ -32,20 +33,19 @@ func Handler(g auth.Generator, template *api.Config, h handlers.AuthHeaders) htt
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 
-		u := r.Header.Get(h.User)
-		if u == "" {
-			http.Error(w, fmt.Sprintf("cannot extract username from header %s", h.User), http.StatusBadRequest)
-			return
-		}
-
 		l, err := lifetime.ParseDuration(r.URL.Query().Get(queryParamLifetime))
 		if err != nil {
 			http.Error(w, errors.Wrapf(err, "cannot parse query parameter %v", queryParamLifetime).Error(), http.StatusBadRequest)
 			return
 		}
 
-		// TODO(negz): Extract groups from header?
-		t, err := g.Generate(&auth.User{Username: u}, time.Duration(l))
+		u := r.Header.Get(h.User)
+		if u == "" {
+			http.Error(w, fmt.Sprintf("cannot extract username from header %s", h.User), http.StatusBadRequest)
+			return
+		}
+		gs := strings.Split(r.Header.Get(h.Group), h.GroupDelimiter)
+		t, err := g.Generate(&auth.User{Username: u, Groups: gs}, time.Duration(l))
 		if err != nil {
 			http.Error(w, errors.Wrap(err, "cannot generate token").Error(), http.StatusInternalServerError)
 			return

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/negz/kubehook/auth"
@@ -28,12 +29,6 @@ func Handler(g auth.Generator, h handlers.AuthHeaders) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 
-		u := r.Header.Get(h.User)
-		if u == "" {
-			write(w, rsp{Error: fmt.Sprintf("cannot extract username from header %s", h.User)}, http.StatusBadRequest)
-			return
-		}
-
 		req := &req{}
 		err := json.NewDecoder(r.Body).Decode(req)
 		if err != nil {
@@ -45,8 +40,13 @@ func Handler(g auth.Generator, h handlers.AuthHeaders) http.HandlerFunc {
 			return
 		}
 
-		// TODO(negz): Extract groups from header?
-		t, err := g.Generate(&auth.User{Username: u}, time.Duration(req.Lifetime))
+		u := r.Header.Get(h.User)
+		if u == "" {
+			write(w, rsp{Error: fmt.Sprintf("cannot extract username from header %s", h.User)}, http.StatusBadRequest)
+			return
+		}
+		gs := strings.Split(r.Header.Get(h.Group), h.GroupDelimiter)
+		t, err := g.Generate(&auth.User{Username: u, Groups: gs}, time.Duration(req.Lifetime))
 		if err != nil {
 			write(w, rsp{Error: errors.Wrap(err, "cannot generate token").Error()}, http.StatusInternalServerError)
 			return
