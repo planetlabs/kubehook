@@ -1,10 +1,26 @@
-package util
+package handlers
 
 import (
 	"io"
 	"net/http"
 	"time"
 )
+
+// Default headers used to determine the currently authenticated user and their
+// groups.
+const (
+	DefaultUserHeader           = "X-Forwarded-User"
+	DefaultGroupHeader          = "X-Forwarded-Groups"
+	DefaultGroupHeaderDelimiter = ";"
+)
+
+// AuthHeaders from which the authenticated user and their groups are extracted.
+type AuthHeaders struct {
+	User  string // The authenticated user.
+	Group string // The authenticated user's groups.
+
+	GroupDelimiter string // The delimiter of the list of groups.
+}
 
 // Run the provided function in a goroutine.
 func Run(fn func()) http.HandlerFunc {

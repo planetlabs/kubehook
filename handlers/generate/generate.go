@@ -4,17 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/negz/kubehook/auth"
+	"github.com/negz/kubehook/handlers"
 	"github.com/negz/kubehook/lifetime"
 
 	"github.com/pkg/errors"
 )
-
-// DefaultUserHeader specifies the default header used to determine the
-// currently authenticated user.
-const DefaultUserHeader = "X-Forwarded-User"
 
 type req struct {
 	Lifetime lifetime.Duration `json:"lifetime"`
@@ -27,15 +25,9 @@ type rsp struct {
 
 // Handler returns an HTTP handler function that generates a JSON web token for
 // the requesting user.
-func Handler(g auth.Generator, userHeader string) http.HandlerFunc {
+func Handler(g auth.Generator, h handlers.AuthHeaders) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
-
-		u := r.Header.Get(userHeader)
-		if u == "" {
-			write(w, rsp{Error: fmt.Sprintf("cannot extract username from header %s", userHeader)}, http.StatusBadRequest)
-			return
-		}
 
 		req := &req{}
 		err := json.NewDecoder(r.Body).Decode(req)
@@ -48,8 +40,13 @@ func Handler(g auth.Generator, userHeader string) http.HandlerFunc {
 			return
 		}
 
-		// TODO(negz): Extract groups from header?
-		t, err := g.Generate(&auth.User{Username: u}, time.Duration(req.Lifetime))
+		u := r.Header.Get(h.User)
+		if u == "" {
+			write(w, rsp{Error: fmt.Sprintf("cannot extract username from header %s", h.User)}, http.StatusBadRequest)
+			return
+		}
+		gs := strings.Split(r.Header.Get(h.Group), h.GroupDelimiter)
+		t, err := g.Generate(&auth.User{Username: u, Groups: gs}, time.Duration(req.Lifetime))
 		if err != nil {
 			write(w, rsp{Error: errors.Wrap(err, "cannot generate token").Error()}, http.StatusInternalServerError)
 			return
