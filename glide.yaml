@@ -1,4 +1,4 @@
-package: github.com/negz/kubehook
+package: github.com/planetlabs/kubehook
 import:
 - package: github.com/dgrijalva/jwt-go
   version: v3.1.0

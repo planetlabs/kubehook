@@ -1,3 +1,19 @@
+/*
+Copyright 2018 Planet Labs Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+implied. See the License for the specific language governing permissions
+and limitations under the License.
+*/
+
 package jwt
 
 import (
@@ -7,7 +23,7 @@ import (
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/go-test/deep"
-	"github.com/negz/kubehook/auth"
+	"github.com/planetlabs/kubehook/auth"
 )
 
 var secret = []byte("secret!")
@@ -47,7 +63,7 @@ func TestAuthenticate(t *testing.T) {
 			name:    "ValidToken",
 			secret:  secret,
 			token:   token(secret, DefaultAudience, "negz", tenMinsAgo, tenMinsFromNow),
-			want:    &auth.User{Username: "negz", UID: "github.com/negz/kubehook/negz"},
+			want:    &auth.User{Username: "negz", UID: "github.com/planetlabs/kubehook/negz"},
 			wantErr: false,
 		},
 		{
@@ -111,7 +127,7 @@ func TestGenerate(t *testing.T) {
 		{
 			name:     "ValidToken",
 			secret:   secret,
-			user:     &auth.User{Username: "negz", UID: "github.com/negz/kubehook/negz"},
+			user:     &auth.User{Username: "negz", UID: "github.com/planetlabs/kubehook/negz"},
 			lifetime: DefaultMaxLifetime,
 			wantErr:  false,
 		},
@@ -119,7 +135,7 @@ func TestGenerate(t *testing.T) {
 			name:     "LifetimeTooLong",
 			secret:   secret,
 			opts:     []Option{MaxLifetime(DefaultMaxLifetime - 1*time.Hour)},
-			user:     &auth.User{Username: "negz", UID: "github.com/negz/kubehook/negz"},
+			user:     &auth.User{Username: "negz", UID: "github.com/planetlabs/kubehook/negz"},
 			lifetime: DefaultMaxLifetime,
 			wantErr:  true,
 		},
