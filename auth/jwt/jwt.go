@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/negz/kubehook/auth"
+	"github.com/planetlabs/kubehook/auth"
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/pkg/errors"
@@ -29,7 +29,7 @@ import (
 
 // Defaults for JSON Web Tokens.
 const (
-	DefaultAudience    = "github.com/negz/kubehook"
+	DefaultAudience    = "github.com/planetlabs/kubehook"
 	DefaultMaxLifetime = 7 * 24 * time.Hour
 )
 

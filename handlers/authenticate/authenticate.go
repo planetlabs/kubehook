@@ -21,11 +21,11 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/pkg/errors"
 	"k8s.io/api/authentication/v1beta1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/negz/kubehook/auth"
-	"github.com/pkg/errors"
+	"github.com/planetlabs/kubehook/auth"
 )
 
 const (

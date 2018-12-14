@@ -24,11 +24,11 @@ import (
 	"testing"
 
 	"github.com/go-test/deep"
-	"github.com/negz/kubehook/auth"
 	"github.com/pkg/errors"
-
 	"k8s.io/api/authentication/v1beta1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/planetlabs/kubehook/auth"
 )
 
 type predictableAuthenticator struct {

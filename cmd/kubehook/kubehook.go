@@ -26,12 +26,12 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/negz/kubehook/auth/jwt"
-	"github.com/negz/kubehook/handlers"
-	"github.com/negz/kubehook/handlers/authenticate"
-	"github.com/negz/kubehook/handlers/generate"
-	"github.com/negz/kubehook/handlers/kubecfg"
-	_ "github.com/negz/kubehook/statik"
+	"github.com/planetlabs/kubehook/auth/jwt"
+	"github.com/planetlabs/kubehook/handlers"
+	"github.com/planetlabs/kubehook/handlers/authenticate"
+	"github.com/planetlabs/kubehook/handlers/generate"
+	"github.com/planetlabs/kubehook/handlers/kubecfg"
+	_ "github.com/planetlabs/kubehook/statik"
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/rakyll/statik/fs"

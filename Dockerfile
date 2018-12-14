@@ -4,7 +4,7 @@ RUN npm install && npm run build
 
 FROM golang:1.10-alpine as golang
 RUN apk --no-cache add git
-WORKDIR /go/src/github.com/negz/kubehook/
+WORKDIR /go/src/github.com/planetlabs/kubehook/
 ENV CGO_ENABLED=0
 ADD . .
 COPY --from=node dist/ dist/frontend
@@ -16,6 +16,6 @@ RUN cd statik && go generate && cd ..
 RUN go build -o /kubehook ./cmd/kubehook
 
 FROM alpine:3.7
-MAINTAINER Nic Cope <n+docker@rk0n.org>
+MAINTAINER Nic Cope <negz@planet.com>
 RUN apk --no-cache add ca-certificates
 COPY --from=golang /kubehook /

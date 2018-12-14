@@ -23,7 +23,7 @@ import (
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/go-test/deep"
-	"github.com/negz/kubehook/auth"
+	"github.com/planetlabs/kubehook/auth"
 )
 
 var secret = []byte("secret!")
@@ -63,7 +63,7 @@ func TestAuthenticate(t *testing.T) {
 			name:    "ValidToken",
 			secret:  secret,
 			token:   token(secret, DefaultAudience, "negz", tenMinsAgo, tenMinsFromNow),
-			want:    &auth.User{Username: "negz", UID: "github.com/negz/kubehook/negz"},
+			want:    &auth.User{Username: "negz", UID: "github.com/planetlabs/kubehook/negz"},
 			wantErr: false,
 		},
 		{
@@ -127,7 +127,7 @@ func TestGenerate(t *testing.T) {
 		{
 			name:     "ValidToken",
 			secret:   secret,
-			user:     &auth.User{Username: "negz", UID: "github.com/negz/kubehook/negz"},
+			user:     &auth.User{Username: "negz", UID: "github.com/planetlabs/kubehook/negz"},
 			lifetime: DefaultMaxLifetime,
 			wantErr:  false,
 		},
@@ -135,7 +135,7 @@ func TestGenerate(t *testing.T) {
 			name:     "LifetimeTooLong",
 			secret:   secret,
 			opts:     []Option{MaxLifetime(DefaultMaxLifetime - 1*time.Hour)},
-			user:     &auth.User{Username: "negz", UID: "github.com/negz/kubehook/negz"},
+			user:     &auth.User{Username: "negz", UID: "github.com/planetlabs/kubehook/negz"},
 			lifetime: DefaultMaxLifetime,
 			wantErr:  true,
 		},

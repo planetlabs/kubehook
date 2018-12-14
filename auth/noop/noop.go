@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/negz/kubehook/auth"
+	"github.com/planetlabs/kubehook/auth"
 
 	"github.com/pkg/errors"
 	"go.uber.org/zap"

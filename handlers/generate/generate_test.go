@@ -25,9 +25,9 @@ import (
 	"testing"
 
 	"github.com/go-test/deep"
-	"github.com/negz/kubehook/auth/noop"
-	"github.com/negz/kubehook/handlers"
-	"github.com/negz/kubehook/lifetime"
+	"github.com/planetlabs/kubehook/auth/noop"
+	"github.com/planetlabs/kubehook/handlers"
+	"github.com/planetlabs/kubehook/lifetime"
 )
 
 const user = "user"

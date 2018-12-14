@@ -23,8 +23,8 @@ import (
 
 	"github.com/go-test/deep"
 
-	"github.com/negz/kubehook/auth/noop"
-	"github.com/negz/kubehook/handlers"
+	"github.com/planetlabs/kubehook/auth/noop"
+	"github.com/planetlabs/kubehook/handlers"
 
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
