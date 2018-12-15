@@ -1,4 +1,4 @@
-# kubehook  [![Godoc](https://img.shields.io/badge/godoc-reference-blue.svg)](https://godoc.org/github.com/negz/kubehook) [![Travis](https://img.shields.io/travis/negz/kubehook.svg?maxAge=300)](https://travis-ci.org/negz/kubehook/) [![Codecov](https://img.shields.io/codecov/c/github/negz/kubehook.svg?maxAge=3600)](https://codecov.io/gh/negz/kubehook/)
+# kubehook  [![Godoc](https://img.shields.io/badge/godoc-reference-blue.svg)](https://godoc.org/github.com/planetlabs/kubehook) [![Travis](https://img.shields.io/travis/negz/kubehook.svg?maxAge=300)](https://travis-ci.org/negz/kubehook/) [![Codecov](https://img.shields.io/codecov/c/github/negz/kubehook.svg?maxAge=3600)](https://codecov.io/gh/negz/kubehook/)
 Kubehook is a [webhook token authentication](https://kubernetes.io/docs/admin/authentication/#webhook-token-authentication)
 service for Kubernetes. It provides one API endpoint to generate
 [JSON Web Tokens](https://jwt.io), and another to validate tokens on behalf of
@@ -57,7 +57,7 @@ Flags:
       --shutdown-grace-period=1m  
                                Wait this long for sessions to end before
                                shutting down.
-      --audience="github.com/negz/kubehook"  
+      --audience="github.com/planetlabs/kubehook"  
                                Audience for JWT HMAC creation and verification.
       --user-header="X-Forwarded-User"  
                                HTTP header specifying the authenticated user
@@ -118,5 +118,5 @@ Content-Type: application/json; charset=utf-8
 Date: Mon, 11 Dec 2017 08:02:10 GMT
 Content-Length: 239
 
-{"kind":"TokenReview","apiVersion":"authentication.k8s.io/v1beta1","metadata":{"creationTimestamp":"2017-12-11T08:02:10Z"},"spec":{},"status":{"authenticated":true,"user":{"username":"cooluser","uid":"github.com/negz/kubehook/cooluser"}}}
+{"kind":"TokenReview","apiVersion":"authentication.k8s.io/v1beta1","metadata":{"creationTimestamp":"2017-12-11T08:02:10Z"},"spec":{},"status":{"authenticated":true,"user":{"username":"cooluser","uid":"github.com/planetlabs/kubehook/cooluser"}}}
 ```

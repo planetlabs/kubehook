@@ -4,7 +4,7 @@ RUN npm install && npm run build
 
 FROM golang:1.10-alpine as golang
 RUN apk --no-cache add git
-WORKDIR /go/src/github.com/negz/kubehook/
+WORKDIR /go/src/github.com/planetlabs/kubehook/
 ENV CGO_ENABLED=0
 ADD . .
 COPY --from=node dist/ dist/frontend
