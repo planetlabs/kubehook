@@ -25,8 +25,8 @@ jobs:
       install: skip
       script:
         - VERSION=$(git rev-parse --short HEAD)
-        - docker build --tag "negz/kubehook:latest" .
-        - docker build --tag "negz/kubehook:${VERSION}" .
+        - docker build --tag "planetlabs/kubehook:latest" .
+        - docker build --tag "planetlabs/kubehook:${VERSION}" .
         - docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
         - ./scripts/push.sh
 

@@ -75,7 +75,7 @@ func Handler(g auth.Generator, template *api.Config, h handlers.AuthHeaders) htt
 
 		w.Header().Set("Content-Type", "application/x-yaml; charset=utf-8")
 		w.Header().Set("Content-Disposition", "attachment")
-		w.Write(y)
+		w.Write(y) // nolint: gosec
 	}
 }
 

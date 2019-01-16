@@ -1,4 +1,4 @@
-# kubehook  [![Godoc](https://img.shields.io/badge/godoc-reference-blue.svg)](https://godoc.org/github.com/planetlabs/kubehook) [![Travis](https://img.shields.io/travis/negz/kubehook.svg?maxAge=300)](https://travis-ci.org/negz/kubehook/) [![Codecov](https://img.shields.io/codecov/c/github/negz/kubehook.svg?maxAge=3600)](https://codecov.io/gh/negz/kubehook/)
+# kubehook  [![Godoc](https://img.shields.io/badge/godoc-reference-blue.svg)](https://godoc.org/github.com/planetlabs/kubehook) [![Travis](https://img.shields.io/travis/planetlabs/kubehook.svg?maxAge=300)](https://travis-ci.com/planetlabs/kubehook/) [![Codecov](https://img.shields.io/codecov/c/github/planetlabs/kubehook.svg?maxAge=3600)](https://codecov.io/gh/planetlabs/kubehook/)
 Kubehook is a [webhook token authentication](https://kubernetes.io/docs/admin/authentication/#webhook-token-authentication)
 service for Kubernetes. It provides one API endpoint to generate
 [JSON Web Tokens](https://jwt.io), and another to validate tokens on behalf of
@@ -38,13 +38,13 @@ docker run -d \
   -p 10003:10003 \
   -v $CFG:/cfg \
   -e "KUBEHOOK_SECRET=secret" \
-  "negz/kubehook:latest" \
+  "planetlabs/kubehook:latest" \
   /kubehook --kubecfg-template /cfg/template
 ```
 
 Kubehook supports the following arguments:
 ```bash
-$ docker run negz/kubehook:latest /kubehook --help
+$ docker run planetlabs/kubehook:latest /kubehook --help
 usage: kubehook [<flags>] <secret>
 
 Authenticates Kubernetes users via JWT tokens.

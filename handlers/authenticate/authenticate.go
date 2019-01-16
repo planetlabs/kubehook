@@ -74,7 +74,7 @@ func extractToken(b io.Reader) (string, error) {
 func write(w http.ResponseWriter, trStatus v1beta1.TokenReviewStatus, httpStatus int) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(httpStatus)
-	json.NewEncoder(w).Encode(v1beta1.TokenReview{
+	json.NewEncoder(w).Encode(v1beta1.TokenReview{ // nolint: gosec
 		TypeMeta:   v1.TypeMeta{APIVersion: authv1Beta1, Kind: tokenReview},
 		ObjectMeta: v1.ObjectMeta{CreationTimestamp: v1.Now()},
 		Status:     trStatus,

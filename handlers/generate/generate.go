@@ -75,5 +75,5 @@ func Handler(g auth.Generator, h handlers.AuthHeaders) http.HandlerFunc {
 func write(w http.ResponseWriter, r rsp, httpStatus int) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(httpStatus)
-	json.NewEncoder(w).Encode(r)
+	json.NewEncoder(w).Encode(r) // nolint: gosec
 }

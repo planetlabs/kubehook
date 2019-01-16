@@ -30,4 +30,4 @@ docker run -d \
 	-p 10003:10003 \
 	-v $CFG:/cfg \
 	-e "KUBEHOOK_SECRET=secret" \
-	"negz/kubehook:${VERSION}" /kubehook $KUBEHOOK_ARGS
+	"planetlabs/kubehook:${VERSION}" /kubehook $KUBEHOOK_ARGS
