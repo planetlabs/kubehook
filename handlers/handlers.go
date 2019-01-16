@@ -43,7 +43,7 @@ func Run(fn func()) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		go fn()
 		w.WriteHeader(http.StatusOK)
-		r.Body.Close()
+		r.Body.Close() // nolint: gosec
 	}
 }
 
@@ -52,7 +52,7 @@ func Ping() http.HandlerFunc {
 	// TODO(negz): Check kubehook health?
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		r.Body.Close()
+		r.Body.Close() // nolint: gosec
 	}
 }
 
@@ -60,7 +60,7 @@ func Ping() http.HandlerFunc {
 func Content(c io.ReadSeeker, filename string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		http.ServeContent(w, r, filename, time.Unix(0, 0), c)
-		r.Body.Close()
+		r.Body.Close() // nolint: gosec
 	}
 }
 
@@ -68,6 +68,6 @@ func Content(c io.ReadSeeker, filename string) http.HandlerFunc {
 func NotImplemented() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotImplemented)
-		r.Body.Close()
+		r.Body.Close() // nolint: gosec
 	}
 }
