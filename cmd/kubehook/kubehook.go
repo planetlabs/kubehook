@@ -18,7 +18,10 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"os/signal"
@@ -72,6 +75,10 @@ func main() {
 		groupHeaderDelim = app.Flag("group-header-delimiter", "Delimiter separating group names in the group-header.").Default(handlers.DefaultGroupHeaderDelimiter).String()
 		maxlife          = app.Flag("max-lifetime", "Maximum allowed JWT lifetime, in Go's time.ParseDuration format.").Default(jwt.DefaultMaxLifetime.String()).Duration()
 		template         = app.Flag("kubecfg-template", "A kubecfg file containing clusters to populate with a user and contexts.").ExistingFile()
+		clientCA         = app.Flag("client-ca", "If set, enables mutual TLS and specifies the path to CA file to use when validating client connections.").String()
+		clientCASubject  = app.Flag("client-ca-subject", "If set, requires that the client CA matches the provided subject (requires --client-ca).").String()
+		tlsCert          = app.Flag("tls-cert", "If set, enables TLS and specifies the path to TLS certificate to use for HTTPS server (requires --tls-key).").String()
+		tlsKey           = app.Flag("tls-key", "Path to TLS key to use for HTTPS server (requires --tls-cert).").String()
 
 		secret = app.Arg("secret", "Secret for JWT HMAC signature and verification.").Required().Envar(envVarName(app.Name, "secret")).String()
 	)
@@ -89,7 +96,37 @@ func main() {
 	kingpin.FatalIfError(err, "cannot create JWT authenticator")
 
 	r := httprouter.New()
-	s := &http.Server{Addr: *listen, Handler: logRequests(r, log)}
+
+	tlsConfig := &tls.Config{}
+
+	if *clientCASubject != "" {
+		tlsConfig.VerifyPeerCertificate = func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
+			err := fmt.Errorf("No verified certificates")
+			for _, chain := range verifiedChains {
+				certificate := chain[0]
+				err = certificate.VerifyHostname(*clientCASubject)
+				if err == nil {
+					return nil
+				}
+			}
+			return err
+		}
+	}
+
+	if *clientCA != "" {
+		clientCACert, err := ioutil.ReadFile(*clientCA)
+		kingpin.FatalIfError(err, "unable to open client CA file")
+
+		clientCertPool := x509.NewCertPool()
+		clientCertPool.AppendCertsFromPEM(clientCACert)
+
+		tlsConfig.ClientAuth = tls.RequireAndVerifyClientCert
+		tlsConfig.ClientCAs = clientCertPool
+
+		tlsConfig.BuildNameToCertificate()
+	}
+
+	s := &http.Server{Addr: *listen, Handler: logRequests(r, log), TLSConfig: tlsConfig,}
 
 	ctx, cancel := context.WithTimeout(context.Background(), *grace)
 	done := make(chan struct{})
@@ -132,7 +169,14 @@ func main() {
 		r.HandlerFunc("GET", "/kubecfg", handlers.NotImplemented())
 	}
 
-	log.Info("shutdown", zap.Error(s.ListenAndServe()))
+	if *tlsCert != "" && *tlsKey != "" {
+		err = s.ListenAndServeTLS(*tlsCert, *tlsKey)
+	} else {
+		err = s.ListenAndServe()
+	}
+
+	log.Info("shutdown", zap.Error(err))
+
 	<-done
 	cancel()
 }
