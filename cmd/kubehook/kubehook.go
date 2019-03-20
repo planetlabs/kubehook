@@ -63,6 +63,59 @@ func envVarName(app, arg string) string {
 	return strings.Replace(strings.ToUpper(fmt.Sprintf("%s_%s", app, arg)), "-", "_", -1)
 }
 
+func listenAndServe(s *http.Server, tlsCert, tlsKey string) error {
+	var err error
+
+	if tlsCert != "" && tlsKey != "" {
+		err = s.ListenAndServeTLS(tlsCert, tlsKey)
+	} else {
+		err = s.ListenAndServe()
+	}
+
+	return err
+}
+
+func makeTLSConfig(clientCA, clientCASubject string) (*tls.Config, error) {
+	tlsConfig := &tls.Config{}
+
+	if clientCASubject != "" {
+		tlsConfig.VerifyPeerCertificate = func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
+			err := fmt.Errorf("No verified certificates")
+
+			for _, chain := range verifiedChains {
+				certificate := chain[0]
+				err = certificate.VerifyHostname(clientCASubject)
+				if err == nil {
+					return nil
+				}
+			}
+
+			return err
+		}
+	}
+
+	if clientCA != "" {
+		var clientCACert []byte
+
+		// Suppress linter warning related to file inclusion since we are
+		// attempting to load a CA file specified by the user.
+		clientCACert, err := ioutil.ReadFile(clientCA) // nolint: gosec
+		if err != nil {
+			return nil, err
+		}
+
+		clientCertPool := x509.NewCertPool()
+		clientCertPool.AppendCertsFromPEM(clientCACert)
+
+		tlsConfig.ClientAuth = tls.RequireAndVerifyClientCert
+		tlsConfig.ClientCAs = clientCertPool
+
+		tlsConfig.BuildNameToCertificate()
+	}
+
+	return tlsConfig, nil
+}
+
 func main() {
 	var (
 		app              = kingpin.New(filepath.Base(os.Args[0]), "Authenticates Kubernetes users via JWT tokens.").DefaultEnvars()
@@ -97,34 +150,8 @@ func main() {
 
 	r := httprouter.New()
 
-	tlsConfig := &tls.Config{}
-
-	if *clientCASubject != "" {
-		tlsConfig.VerifyPeerCertificate = func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
-			err := fmt.Errorf("No verified certificates")
-			for _, chain := range verifiedChains {
-				certificate := chain[0]
-				err = certificate.VerifyHostname(*clientCASubject)
-				if err == nil {
-					return nil
-				}
-			}
-			return err
-		}
-	}
-
-	if *clientCA != "" {
-		clientCACert, err := ioutil.ReadFile(*clientCA)
-		kingpin.FatalIfError(err, "unable to open client CA file")
-
-		clientCertPool := x509.NewCertPool()
-		clientCertPool.AppendCertsFromPEM(clientCACert)
-
-		tlsConfig.ClientAuth = tls.RequireAndVerifyClientCert
-		tlsConfig.ClientCAs = clientCertPool
-
-		tlsConfig.BuildNameToCertificate()
-	}
+	tlsConfig, err := makeTLSConfig(*clientCA, *clientCASubject)
+	kingpin.FatalIfError(err, "initializing TLS configuration")
 
 	s := &http.Server{Addr: *listen, Handler: logRequests(r, log), TLSConfig: tlsConfig,}
 
@@ -169,13 +196,7 @@ func main() {
 		r.HandlerFunc("GET", "/kubecfg", handlers.NotImplemented())
 	}
 
-	if *tlsCert != "" && *tlsKey != "" {
-		err = s.ListenAndServeTLS(*tlsCert, *tlsKey)
-	} else {
-		err = s.ListenAndServe()
-	}
-
-	log.Info("shutdown", zap.Error(err))
+	log.Info("shutdown", zap.Error(listenAndServe(s, *tlsCert, *tlsKey)))
 
 	<-done
 	cancel()
