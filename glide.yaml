@@ -25,6 +25,8 @@ import:
   subpackages:
   - tools/clientcmd
   - tools/clientcmd/api
+- package: github.com/dyson/certman
+  version: ~0.2.1
 testImport:
 - package: github.com/go-test/deep
   version: v1.0.0

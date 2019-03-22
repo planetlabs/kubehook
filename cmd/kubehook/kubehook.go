@@ -36,6 +36,7 @@ import (
 	"github.com/planetlabs/kubehook/handlers/kubecfg"
 	_ "github.com/planetlabs/kubehook/statik"
 
+	"github.com/dyson/certman"
 	"github.com/julienschmidt/httprouter"
 	"github.com/rakyll/statik/fs"
 	"go.uber.org/zap"
@@ -64,15 +65,22 @@ func envVarName(app, arg string) string {
 }
 
 func listenAndServe(s *http.Server, tlsCert, tlsKey string) error {
-	var err error
-
 	if tlsCert != "" && tlsKey != "" {
-		err = s.ListenAndServeTLS(tlsCert, tlsKey)
-	} else {
-		err = s.ListenAndServe()
+		cm, err := certman.New(tlsCert, tlsKey)
+		if err != nil {
+			return err
+		}
+
+		if err := cm.Watch(); err != nil {
+			return err
+		}
+
+		s.TLSConfig.GetCertificate = cm.GetCertificate
+
+		return s.ListenAndServeTLS("", "")
 	}
 
-	return err
+	return s.ListenAndServe()
 }
 
 func makeTLSConfig(clientCA, clientCASubject string) (*tls.Config, error) {
