@@ -91,5 +91,6 @@ func populateUser(cfg *api.Config, username, token string) api.Config {
 		c.Clusters[name] = cluster
 		c.Contexts[name] = &api.Context{Cluster: name, AuthInfo: templateUser}
 	}
+	c.CurrentContext = cfg.CurrentContext
 	return c
 }
