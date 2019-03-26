@@ -38,6 +38,7 @@ import (
 
 	"github.com/dyson/certman"
 	"github.com/julienschmidt/httprouter"
+	"github.com/pkg/errors"
 	"github.com/rakyll/statik/fs"
 	"go.uber.org/zap"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
@@ -83,37 +84,22 @@ func listenAndServe(s *http.Server, tlsCert, tlsKey string) error {
 	return s.ListenAndServe()
 }
 
-func makeTLSConfig(clientCA, clientCASubject string) (*tls.Config, error) {
+func makeTLSConfig(clientCA []byte, clientCASubject string) *tls.Config {
 	tlsConfig := &tls.Config{}
 
 	if clientCASubject != "" {
 		tlsConfig.VerifyPeerCertificate = func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
-			err := fmt.Errorf("No verified certificates")
-
-			for _, chain := range verifiedChains {
-				certificate := chain[0]
-				err = certificate.VerifyHostname(clientCASubject)
-				if err == nil {
-					return nil
-				}
+			if len(verifiedChains) == 0 || len(verifiedChains[0]) == 0 {
+				return errors.New("client did not present any TLS certificates")
 			}
 
-			return err
+			return verifiedChains[0][0].VerifyHostname(clientCASubject)
 		}
 	}
 
-	if clientCA != "" {
-		var clientCACert []byte
-
-		// Suppress linter warning related to file inclusion since we are
-		// attempting to load a CA file specified by the user.
-		clientCACert, err := ioutil.ReadFile(clientCA) // nolint: gosec
-		if err != nil {
-			return nil, err
-		}
-
+	if len(clientCA) > 0 {
 		clientCertPool := x509.NewCertPool()
-		clientCertPool.AppendCertsFromPEM(clientCACert)
+		clientCertPool.AppendCertsFromPEM(clientCA)
 
 		tlsConfig.ClientAuth = tls.RequireAndVerifyClientCert
 		tlsConfig.ClientCAs = clientCertPool
@@ -121,7 +107,7 @@ func makeTLSConfig(clientCA, clientCASubject string) (*tls.Config, error) {
 		tlsConfig.BuildNameToCertificate()
 	}
 
-	return tlsConfig, nil
+	return tlsConfig
 }
 
 func main() {
@@ -136,10 +122,10 @@ func main() {
 		groupHeaderDelim = app.Flag("group-header-delimiter", "Delimiter separating group names in the group-header.").Default(handlers.DefaultGroupHeaderDelimiter).String()
 		maxlife          = app.Flag("max-lifetime", "Maximum allowed JWT lifetime, in Go's time.ParseDuration format.").Default(jwt.DefaultMaxLifetime.String()).Duration()
 		template         = app.Flag("kubecfg-template", "A kubecfg file containing clusters to populate with a user and contexts.").ExistingFile()
-		clientCA         = app.Flag("client-ca", "If set, enables mutual TLS and specifies the path to CA file to use when validating client connections.").String()
+		clientCA         = app.Flag("client-ca", "If set, enables mutual TLS and specifies the path to CA file to use when validating client connections.").File()
 		clientCASubject  = app.Flag("client-ca-subject", "If set, requires that the client CA matches the provided subject (requires --client-ca).").String()
-		tlsCert          = app.Flag("tls-cert", "If set, enables TLS and specifies the path to TLS certificate to use for HTTPS server (requires --tls-key).").String()
-		tlsKey           = app.Flag("tls-key", "Path to TLS key to use for HTTPS server (requires --tls-cert).").String()
+		tlsCert          = app.Flag("tls-cert", "If set, enables TLS and specifies the path to TLS certificate to use for HTTPS server (requires --tls-key).").ExistingFile()
+		tlsKey           = app.Flag("tls-key", "Path to TLS key to use for HTTPS server (requires --tls-cert).").ExistingFile()
 
 		secret = app.Arg("secret", "Secret for JWT HMAC signature and verification.").Required().Envar(envVarName(app.Name, "secret")).String()
 	)
@@ -158,10 +144,17 @@ func main() {
 
 	r := httprouter.New()
 
-	tlsConfig, err := makeTLSConfig(*clientCA, *clientCASubject)
-	kingpin.FatalIfError(err, "initializing TLS configuration")
+	var clientCACert []byte
+	if *clientCA != nil {
+		clientCACert, err = ioutil.ReadAll(*clientCA)
+		kingpin.FatalIfError(err, "cannot load client CA certificate file")
+	}
 
-	s := &http.Server{Addr: *listen, Handler: logRequests(r, log), TLSConfig: tlsConfig,}
+	s := &http.Server{
+		Addr:      *listen,
+		Handler:   logRequests(r, log),
+		TLSConfig: makeTLSConfig(clientCACert, *clientCASubject),
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), *grace)
 	done := make(chan struct{})
