@@ -67,6 +67,15 @@ Flags:
       --kubecfg-template=KUBECFG-TEMPLATE  
                                A kubecfg file containing clusters to populate
                                with a user and contexts.
+      --client-ca=CLIENT-CA    If set, enables mutual TLS and specifies the path to CA file
+                               to use when validating client connections.
+      --client-ca-subject=CLIENT-CA-SUBJECT
+                               If set, requires that the client CA matches the provided
+                               subject (requires --client-ca).
+      --tls-cert=TLS-CERT      If set, enables TLS and specifies the path to TLS
+                               certificate to use for HTTPS server (requires --tls-key).
+      --tls-key=TLS-KEY        Path to TLS key to use for HTTPS server (requires
+                               --tls-cert).
 
 Args:
   <secret>  Secret for JWT HMAC signature and verification.
