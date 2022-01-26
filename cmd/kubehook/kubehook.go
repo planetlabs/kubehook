@@ -115,6 +115,7 @@ func main() {
 		app              = kingpin.New(filepath.Base(os.Args[0]), "Authenticates Kubernetes users via JWT tokens.").DefaultEnvars()
 		listen           = app.Flag("listen", "Address at which to expose HTTP webhook.").Default(":10003").String()
 		debug            = app.Flag("debug", "Run with debug logging.").Short('d').Bool()
+		term             = app.Flag("shutdown-handler", "Provide endpoint to shutdown the service.").Short('S').Default("true").Bool()
 		grace            = app.Flag("shutdown-grace-period", "Wait this long for sessions to end before shutting down.").Default("1m").Duration()
 		audience         = app.Flag("audience", "Audience for JWT HMAC creation and verification.").Default(jwt.DefaultAudience).String()
 		userHeader       = app.Flag("user-header", "HTTP header specifying the authenticated user sending a token generation request.").Default(handlers.DefaultUserHeader).String()
@@ -186,8 +187,13 @@ func main() {
 	r.HandlerFunc("GET", "/", handlers.Content(index, filepath.Base(indexPath)))
 	r.HandlerFunc("POST", "/generate", generate.Handler(m, h))
 	r.HandlerFunc("POST", "/authenticate", authenticate.Handler(m))
-	r.HandlerFunc("GET", "/quitquitquit", handlers.Run(shutdown))
 	r.HandlerFunc("GET", "/healthz", handlers.Ping())
+
+	if *term {
+		r.HandlerFunc("GET", "/quitquitquit", handlers.Run(shutdown))
+	} else {
+		r.HandlerFunc("GET", "/quitquitquit", handlers.NotImplemented())
+	}
 
 	if *template != "" {
 		t, err := kubecfg.LoadTemplate(*template)
