@@ -35,6 +35,7 @@ type req struct {
 }
 
 type rsp struct {
+	User  string `json:"user,omitempty"`
 	Token string `json:"token,omitempty"`
 	Error string `json:"error,omitempty"`
 }
@@ -68,12 +69,16 @@ func Handler(g auth.Generator, h handlers.AuthHeaders) http.HandlerFunc {
 			return
 		}
 
-		write(w, rsp{Token: t}, http.StatusOK)
+		res := rsp{
+			User: u,
+			Token: t,
+		}
+		write(w, res, http.StatusOK)
 	}
 }
 
-func write(w http.ResponseWriter, r rsp, httpStatus int) {
+func write(w http.ResponseWriter, data interface{}, httpStatus int) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(httpStatus)
-	json.NewEncoder(w).Encode(r) // nolint: gosec
+	json.NewEncoder(w).Encode(data) // nolint: gosec
 }

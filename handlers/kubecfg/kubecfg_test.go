@@ -60,10 +60,10 @@ func TestHandler(t *testing.T) {
 					"b": &api.Cluster{Server: "https://example.net", CertificateAuthorityData: []byte("PAM")},
 				},
 				Contexts: map[string]*api.Context{
-					"a": &api.Context{AuthInfo: templateUser, Cluster: "a"},
-					"b": &api.Context{AuthInfo: templateUser, Cluster: "b"},
+					"a": &api.Context{AuthInfo: user, Cluster: "a"},
+					"b": &api.Context{AuthInfo: user, Cluster: "b"},
 				},
-				AuthInfos: map[string]*api.AuthInfo{templateUser: &api.AuthInfo{Token: user}},
+				AuthInfos: map[string]*api.AuthInfo{user: &api.AuthInfo{Token: user}},
 			},
 		},
 		{
@@ -83,10 +83,10 @@ func TestHandler(t *testing.T) {
 					"b": &api.Cluster{Server: "https://example.net", CertificateAuthorityData: []byte("PAM")},
 				},
 				Contexts: map[string]*api.Context{
-					"a": &api.Context{AuthInfo: templateUser, Cluster: "a"},
-					"b": &api.Context{AuthInfo: templateUser, Cluster: "b"},
+					"a": &api.Context{AuthInfo: user, Cluster: "a"},
+					"b": &api.Context{AuthInfo: user, Cluster: "b"},
 				},
-				AuthInfos: map[string]*api.AuthInfo{templateUser: &api.AuthInfo{Token: user}},
+				AuthInfos: map[string]*api.AuthInfo{user: &api.AuthInfo{Token: user}},
 			},
 		},
 		{

@@ -32,7 +32,6 @@ import (
 )
 
 const (
-	templateUser       = "kubehook"
 	queryParamLifetime = "lifetime"
 )
 
@@ -67,7 +66,7 @@ func Handler(g auth.Generator, template *api.Config, h handlers.AuthHeaders) htt
 			return
 		}
 
-		y, err := clientcmd.Write(populateUser(template, templateUser, t))
+		y, err := clientcmd.Write(populateUser(template, u, t))
 		if err != nil {
 			http.Error(w, errors.Wrap(err, "cannot marshal template to YAML").Error(), http.StatusInternalServerError)
 			return
@@ -89,7 +88,7 @@ func populateUser(cfg *api.Config, username, token string) api.Config {
 	}
 	for name, cluster := range cfg.Clusters {
 		c.Clusters[name] = cluster
-		c.Contexts[name] = &api.Context{Cluster: name, AuthInfo: templateUser}
+		c.Contexts[name] = &api.Context{Cluster: name, AuthInfo: username}
 	}
 	c.CurrentContext = cfg.CurrentContext
 	return c
