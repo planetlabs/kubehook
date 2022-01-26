@@ -4,17 +4,15 @@ services:
   - docker
 
 go:
-  - 1.9.x
+  - 1.17.x
 
 
 jobs:
   include:
     - stage: test
       before_install:
-        - go get -u github.com/Masterminds/glide
-        - go get -u github.com/alecthomas/gometalinter
+        - go install github.com/alecthomas/gometalinter
       install:
-        - glide install
         - gometalinter --install
       script:
         - ./scripts/test.sh
