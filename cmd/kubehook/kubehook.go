@@ -42,6 +42,8 @@ import (
 	"github.com/rakyll/statik/fs"
 	"go.uber.org/zap"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
+	"k8s.io/api/authentication/v1beta1"
+	v1release "k8s.io/api/authentication/v1"
 )
 
 const indexPath = "/index.html"
@@ -126,6 +128,9 @@ func main() {
 		clientCASubject  = app.Flag("client-ca-subject", "If set, requires that the client CA matches the provided subject (requires --client-ca).").String()
 		tlsCert          = app.Flag("tls-cert", "If set, enables TLS and specifies the path to TLS certificate to use for HTTPS server (requires --tls-key).").ExistingFile()
 		tlsKey           = app.Flag("tls-key", "Path to TLS key to use for HTTPS server (requires --tls-cert).").ExistingFile()
+		tokenVersion     = app.Flag("authentication-token-webhook-version", "The API version of the authentication.k8s.io TokenReview to expect from and respond to the api-server.").
+			Default(v1beta1.SchemeGroupVersion.Version).
+			Enum(v1beta1.SchemeGroupVersion.Version, v1release.SchemeGroupVersion.Version)
 
 		secret = app.Arg("secret", "Secret for JWT HMAC signature and verification.").Required().Envar(envVarName(app.Name, "secret")).String()
 	)
@@ -185,7 +190,7 @@ func main() {
 	r.ServeFiles("/dist/*filepath", frontend)
 	r.HandlerFunc("GET", "/", handlers.Content(index, filepath.Base(indexPath)))
 	r.HandlerFunc("POST", "/generate", generate.Handler(m, h))
-	r.HandlerFunc("POST", "/authenticate", authenticate.Handler(m))
+	r.HandlerFunc("POST", "/authenticate", authenticate.Handler(m, *tokenVersion))
 	r.HandlerFunc("GET", "/quitquitquit", handlers.Run(shutdown))
 	r.HandlerFunc("GET", "/healthz", handlers.Ping())
 
