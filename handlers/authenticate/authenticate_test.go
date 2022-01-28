@@ -22,6 +22,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/go-test/deep"
 	"github.com/pkg/errors"
@@ -30,6 +31,12 @@ import (
 	"k8s.io/api/authentication/v1beta1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+func mockTimeProvider() v1.Time {
+	now := time.Unix(0, 0)
+
+	return v1.Time{now}
+}
 
 type predictableAuthenticator struct {
 	err error
@@ -66,7 +73,7 @@ func TestHandler(t *testing.T) {
 		{
 			name: "Success",
 			req: &v1beta1.TokenReview{
-				TypeMeta:   v1.TypeMeta{APIVersion: authv1Beta1, Kind: tokenReview},
+				TypeMeta:   v1.TypeMeta{APIVersion: beta1APIVersion, Kind: tokenReview},
 				ObjectMeta: v1.ObjectMeta{CreationTimestamp: v1.Now()},
 				Spec:       v1beta1.TokenReviewSpec{Token: "token"},
 			},
@@ -80,7 +87,7 @@ func TestHandler(t *testing.T) {
 			name: "AuthFailed",
 			err:  errors.New("bad token"),
 			req: &v1beta1.TokenReview{
-				TypeMeta:   v1.TypeMeta{APIVersion: authv1Beta1, Kind: tokenReview},
+				TypeMeta:   v1.TypeMeta{APIVersion: beta1APIVersion, Kind: tokenReview},
 				ObjectMeta: v1.ObjectMeta{CreationTimestamp: v1.Now()},
 				Spec:       v1beta1.TokenReviewSpec{Token: "badToken"},
 			},
@@ -100,7 +107,7 @@ func TestHandler(t *testing.T) {
 		{
 			name: "BadKind",
 			req: &v1beta1.TokenReview{
-				TypeMeta:   v1.TypeMeta{APIVersion: authv1Beta1, Kind: "TokenRequest"},
+				TypeMeta:   v1.TypeMeta{APIVersion: beta1APIVersion, Kind: "TokenRequest"},
 				ObjectMeta: v1.ObjectMeta{CreationTimestamp: v1.Now()},
 				Spec:       v1beta1.TokenReviewSpec{Token: "badToken"},
 			},
@@ -110,7 +117,7 @@ func TestHandler(t *testing.T) {
 		{
 			name: "MissingToken",
 			req: &v1beta1.TokenReview{
-				TypeMeta:   v1.TypeMeta{APIVersion: authv1Beta1, Kind: tokenReview},
+				TypeMeta:   v1.TypeMeta{APIVersion: beta1APIVersion, Kind: tokenReview},
 				ObjectMeta: v1.ObjectMeta{CreationTimestamp: v1.Now()},
 				Spec:       v1beta1.TokenReviewSpec{Token: ""},
 			},
@@ -127,7 +134,7 @@ func TestHandler(t *testing.T) {
 			if err != nil {
 				t.Fatalf("json.Marshal(%+#v): %v", tt.req, err)
 			}
-			Handler(a)(w, httptest.NewRequest("GET", "/", bytes.NewReader(body)))
+			Handler(a, v1beta1.SchemeGroupVersion.Version)(w, httptest.NewRequest("GET", "/", bytes.NewReader(body)))
 
 			if w.Code != tt.httpStatus {
 				t.Fatalf("w.Code: want %v, got %v", tt.httpStatus, w.Code)

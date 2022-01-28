@@ -18,76 +18,52 @@ package authenticate
 
 import (
 	"encoding/json"
-	"io"
 	"net/http"
 
 	"k8s.io/api/authentication/v1beta1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/pkg/errors"
 	"github.com/planetlabs/kubehook/auth"
 )
 
 const (
-	authv1Beta1 = "authentication.k8s.io/v1beta1"
 	tokenReview = "TokenReview"
 )
 
+type timeProvider func() v1.Time
+
 // Handler returns an HTTP handler function that handles an authentication
 // webhook using the supplied Authenticator.
-func Handler(a auth.Authenticator) http.HandlerFunc {
+func Handler(a auth.Authenticator, tokenVersion string) http.HandlerFunc {
+	var proc processor
+
+	if tokenVersion == v1beta1.SchemeGroupVersion.Version {
+		proc = newBeta1Processor(v1.Now)
+	} else {
+		proc = newReleaseProcessor(v1.Now)
+	}
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 
-		t, err := extractToken(r.Body)
+		t, err := proc.ExtractToken(r.Body)
 		if err != nil {
-			write(w, v1beta1.TokenReviewStatus{Error: err.Error()}, http.StatusBadRequest)
+			write(w, proc.CreateErrorStatus(err), http.StatusBadRequest)
 			return
 		}
 
 		u, err := a.Authenticate(t)
 		if err != nil {
-			write(w, v1beta1.TokenReviewStatus{Error: err.Error()}, http.StatusForbidden)
+			write(w, proc.CreateErrorStatus(err), http.StatusForbidden)
 			return
 		}
 
-		write(w, tokenReviewStatus(u), http.StatusOK)
+		write(w, proc.CreateReviewStatus(u), http.StatusOK)
 	}
 }
 
-func extractToken(b io.Reader) (string, error) {
-	req := &v1beta1.TokenReview{}
-	err := json.NewDecoder(b).Decode(req)
-	switch {
-	case err != nil:
-		return "", errors.Wrap(err, "cannot parse token request")
-	case req.APIVersion != authv1Beta1:
-		return "", errors.Errorf("unsupported API version %s", req.APIVersion)
-	case req.Kind != tokenReview:
-		return "", errors.Errorf("unsupported Kind %s", req.Kind)
-	case req.Spec.Token == "":
-		return "", errors.New("missing token")
-	}
-	return req.Spec.Token, nil
-}
-
-func write(w http.ResponseWriter, trStatus v1beta1.TokenReviewStatus, httpStatus int) {
+func write(w http.ResponseWriter, data interface{}, httpStatus int) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(httpStatus)
-	json.NewEncoder(w).Encode(v1beta1.TokenReview{ // nolint: gosec
-		TypeMeta:   v1.TypeMeta{APIVersion: authv1Beta1, Kind: tokenReview},
-		ObjectMeta: v1.ObjectMeta{CreationTimestamp: v1.Now()},
-		Status:     trStatus,
-	})
-}
-
-func tokenReviewStatus(u *auth.User) v1beta1.TokenReviewStatus {
-	return v1beta1.TokenReviewStatus{
-		Authenticated: true,
-		User: v1beta1.UserInfo{
-			Username: u.Username,
-			UID:      u.UID,
-			Groups:   u.Groups,
-		},
-	}
+	json.NewEncoder(w).Encode(data) // nolint: gosec
 }
