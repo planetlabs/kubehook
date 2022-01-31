@@ -1,0 +1,27 @@
+---
+
+version: '2.4'
+
+services:
+  frontend:
+    image: nginx:alpine
+    volumes:
+      - type: bind
+        source: ./frontend
+        target: /etc/nginx/conf.d
+        read_only: true
+    ports:
+      - "127.0.0.1:8080:80"
+
+  backend:
+    image: localhost/kubehook
+    build: ..
+    command:
+      - '--kubecfg-template'
+      - '/etc/kubehook/kubecfg.conf'
+      - 'example-secret'
+    volumes:
+      - type: bind
+        source: ./backend
+        target: /etc/kubehook
+        read_only: true

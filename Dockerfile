@@ -19,3 +19,5 @@ FROM alpine:3.7
 MAINTAINER Nic Cope <n+docker@rk0n.org>
 RUN apk --no-cache add ca-certificates
 COPY --from=golang /kubehook /
+ENTRYPOINT [ "/kubehook" ]
+CMD [ "--help" ]
