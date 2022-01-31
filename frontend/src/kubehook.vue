@@ -91,6 +91,7 @@ export default {
       kubecfg: false,
       lifetime: 2,
       clusterID: "radcluster",
+      user: null,
       token: null,
       error: null
     };
@@ -121,6 +122,7 @@ export default {
       this.axios
         .post("/generate", { lifetime: this.inHours(this.lifetime) })
         .then(function(response) {
+          _this.user = response.data.user;
           _this.token = response.data.token;
         })
         .catch(function(e) {
@@ -149,26 +151,31 @@ export default {
     },
     snippetManual: function() {
       return (
-        "export CLUSTER=" +
+        "export K8S_CLUSTER=" +
         this.clusterID +
         "\n" +
-        'export TOKEN="' +
+        "export K8S_USER=" +
+        this.user +
+        "\n" +
+        'export K8S_TOKEN="' +
         this.token +
         '"\n' +
         "\n" +
         "# Create or update a user.\n" +
-        'kubectl config set-credentials kubehook --token="${TOKEN}"\n' +
+        'kubectl config set-credentials ${K8S_USER} --token="${K8S_TOKEN}"\n' +
         "\n" +
         "# Associate your user with an existing cluster.\n" +
-        "kubectl config set-context ${CLUSTER} --cluster=${CLUSTER} --user=kubehook\n" +
+        "kubectl config set-context ${K8S_CLUSTER} --cluster=${K8S_CLUSTER} --user=${K8S_USER}\n" +
         "\n" +
         "# Use your context to discover available namespaces.\n" +
-        "kubectl --context=${CLUSTER} get namespaces"
+        "kubectl --context=${K8S_CLUSTER} get namespaces"
       );
     },
     snippetUpdate: function() {
       return (
-        'kubectl config set-credentials kubehook --token="' + this.token + '"\n'
+        'kubectl config set-credentials ' +
+        this.user +
+        ' --token="' + this.token + '"\n'
       );
     }
   }
