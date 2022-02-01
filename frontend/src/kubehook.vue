@@ -59,10 +59,7 @@
                 <b-col md="9" order="12" order-md="1">
                   <strong>Token lifetime</strong>
                   <v-slider
-                    formatter="{value} days"
-                    min="1"
-                    max="7"
-                    tooltip-dir="bottom"
+                    v-bind="slider"
                     v-model="lifetime"
                   ></v-slider>
                   <br />
@@ -88,6 +85,12 @@ export default {
   },
   data: function() {
     return {
+      slider: {
+        min: 1,
+        max: 7,
+        tooltipDir: "bottom",
+        formatter: "{value} days"
+      },
       kubecfg: false,
       lifetime: 2,
       clusterID: "radcluster",
@@ -95,12 +98,34 @@ export default {
       error: null
     };
   },
+  mounted: function() {
+    this.fetchConfig();
+  },
   created: function() {
     this.detectKubeCfg();
   },
   methods: {
     inHours: function(lifetime) {
       return lifetime * 24 + "h";
+    },
+    inDays: function(lifetime) {
+      return Math.floor(lifetime / 24);
+    },
+    fetchConfig: function() {
+      var _this = this;
+      this.axios
+        .get("/client")
+        .then(function(response) {
+          _this.slider.max = _this.inDays(response.data.max_lifetime);
+          _this.clusterID = response.data.cluster_id;
+        })
+        .catch(function(e) {
+          if (e.request) {
+            _this.error = "could not connect to API";
+            return;
+          }
+          _this.error = e;
+        });
     },
     detectKubeCfg: function() {
       var _this = this;

@@ -32,6 +32,7 @@ import (
 	"github.com/planetlabs/kubehook/auth/jwt"
 	"github.com/planetlabs/kubehook/handlers"
 	"github.com/planetlabs/kubehook/handlers/authenticate"
+	"github.com/planetlabs/kubehook/handlers/client"
 	"github.com/planetlabs/kubehook/handlers/generate"
 	"github.com/planetlabs/kubehook/handlers/kubecfg"
 	_ "github.com/planetlabs/kubehook/statik"
@@ -193,8 +194,10 @@ func main() {
 		t, err := kubecfg.LoadTemplate(*template)
 		kingpin.FatalIfError(err, "cannot load kubeconfig template")
 		r.HandlerFunc("GET", "/kubecfg", kubecfg.Handler(m, t, h))
+		r.HandlerFunc("GET", "/client", client.Handler(*maxlife, t))
 	} else {
 		r.HandlerFunc("GET", "/kubecfg", handlers.NotImplemented())
+		r.HandlerFunc("GET", "/client", client.Handler(*maxlife, nil))
 	}
 
 	log.Info("shutdown", zap.Error(listenAndServe(s, *tlsCert, *tlsKey)))
